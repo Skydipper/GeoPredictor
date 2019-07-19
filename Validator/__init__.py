@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from .middleware import parse_payload
+from Validator.middleware import parse_payload
 import logging
 
 app = Flask(__name__)
