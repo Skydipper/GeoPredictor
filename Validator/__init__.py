@@ -3,6 +3,7 @@ from Validator.middleware import parse_payload
 import logging
 
 app = Flask(__name__)
+logging.basicConfig(level="DEBUG")
 
 @app.route('/')
 def hello_world(name='world'):
@@ -18,10 +19,8 @@ def post_schema(payload):
     return jsonify(payload), 200
 
 @app.route('/schema/<id>',  strict_slashes=False, methods=['GET'])
-@parse_payload
+# @parse_payload
 def get_schema(id):
     #function to get schema id from mongo
-    logging.info(f'[GET]: Recieved {payload}')
-    
-
-    return jsonify(payload), 200
+    logging.info(f'[GET]: Recieved {id}')
+    return f"{id}"
