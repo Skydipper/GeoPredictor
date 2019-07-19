@@ -1,0 +1,10 @@
+:api = http://0.0.0.0:6767
+:headers = <<
+Content-Type: application/json
+#
+GET :api
+#
+
+POST :api/schema
+:headers
+{"payload": "test"}
