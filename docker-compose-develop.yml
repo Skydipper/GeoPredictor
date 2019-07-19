@@ -6,7 +6,7 @@ services:
       - "6767:6767"
     command: develop
     volumes:
-      - "./validator:/validator/validator"
+      - "./Validator:/validator/Validator"
 networks:
   default:
     external:
