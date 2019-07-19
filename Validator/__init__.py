@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify
 from Validator.middleware import parse_payload
 import logging
+from Validator.validators import validate_schema_id
 
 app = Flask(__name__)
 logging.basicConfig(level="DEBUG")
+
+
 
 @app.route('/')
 def hello_world(name='world'):
@@ -19,7 +22,7 @@ def post_schema(payload):
     return jsonify(payload), 200
 
 @app.route('/schema/<id>',  strict_slashes=False, methods=['GET'])
-# @parse_payload
+@validate_schema_id
 def get_schema(id):
     #function to get schema id from mongo
     logging.info(f'[GET]: Recieved {id}')
