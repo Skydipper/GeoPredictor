@@ -7,6 +7,16 @@ services:
     command: develop
     volumes:
       - "./Validator:/validator/Validator"
+  mongodb:
+    container_name: 'validator-mongodb'
+    image: mongo:latest
+    ports:
+        - '27017:27017'
+    volumes:
+        - '~/docker/db/validatorMongo:/data/db'
+    expose:
+        - '27017'
+    command: "mongod --smallfiles --logpath=/var/log/mongodb/mongodb.log"
 networks:
   default:
     external:
