@@ -1,0 +1,14 @@
+version: '3'
+services:
+  validator:
+    build: .
+    ports:
+      - "6767:6767"
+    command: develop
+    volumes:
+      - "./validator:/validator/validator"
+networks:
+  default:
+    external:
+      name: validator-network
+
