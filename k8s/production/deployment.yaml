@@ -1,0 +1,61 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: default
+  labels:
+    name: {name}
+    app: validator
+  name: {name}
+spec:
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        name: {name}
+    spec:
+      tolerations:
+      - key: "type"
+        operator: "Equal"
+        value: "validator"
+        effect: "NoSchedule"
+      containers:
+      - name: {name}
+        image: vizzuality/{name}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "128Mi"
+          limits:
+            memory: "512Mi"
+        args:
+          - start
+        env:
+          - name: PORT
+            value: "4506"
+          - name: ENVIRONMENT
+            value: prod
+          - name: LOCAL_URL
+            value: http://{name}.default.svc.cluster.local:4506
+          - name: CT_URL
+            valueFrom:
+                secretKeyRef:
+                  name: mssecrets
+                  key: CT_URL
+          - name: CT_TOKEN
+            valueFrom:
+                secretKeyRef:
+                  name: mssecrets
+                  key: CT_TOKEN
+          - name: CT_REGISTER_MODE
+            valueFrom:
+                secretKeyRef:
+                  name: mssecrets
+                  key: CT_REGISTER_MODE
+          - name: API_VERSION
+            valueFrom:
+                secretKeyRef:
+                  name: mssecrets
+                  key: API_VERSION
+        ports:
+          - containerPort: 4506
+      restartPolicy: Always

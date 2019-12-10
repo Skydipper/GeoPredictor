@@ -1,0 +1,13 @@
+{
+	"name": "validator",
+	"endpoints": [
+		{
+			"path": "/v1/validator/schema",
+			"method": "POST",
+			"redirect": {
+				"method": "POST",
+				"path": "/api/v1/validator/schema"
+			}
+		}
+	]
+}

@@ -17,8 +17,4 @@ services:
     expose:
         - '27017'
     command: "mongod --smallfiles --logpath=/var/log/mongodb/mongodb.log"
-networks:
-  default:
-    external:
-      name: validator-network
 
