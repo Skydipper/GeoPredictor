@@ -1,8 +1,8 @@
-from Validator import app
+from GeoPredictor import app
 
 
 if __name__ == "__main__":
     app.run(
         host='0.0.0.0',
         debug=True,
-        port='6767')
+        port='6868')

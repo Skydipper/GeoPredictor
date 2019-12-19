@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.7
 MAINTAINER Vizzuality Science Team info@vizzuality.com
 
 WORKDIR /validator
@@ -10,7 +10,7 @@ RUN pip install -r requirements.txt
 
 COPY entrypoint.sh entrypoint.sh
 
-EXPOSE 6767
-COPY ./Validator Validator
+EXPOSE 6868
+COPY ./GeoPredictor GeoPredictor
 
 ENTRYPOINT ["./entrypoint.sh"]

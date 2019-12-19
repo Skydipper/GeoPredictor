@@ -1,12 +1,12 @@
 {
-	"name": "validator",
+	"name": "GeoPredictor",
 	"endpoints": [
 		{
-			"path": "/v1/validator/schema",
+			"path": "/v1/geopredictor/schema",
 			"method": "POST",
 			"redirect": {
 				"method": "POST",
-				"path": "/api/v1/validator/schema"
+				"path": "/api/v1/geopredictor/schema"
 			}
 		}
 	]

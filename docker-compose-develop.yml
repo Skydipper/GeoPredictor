@@ -1,17 +1,42 @@
 version: '3'
 services:
-  GeoPredictor:
+  geo-postgres-compose:
+    container_name: 'geo-postgres-compose'
+    image: geographica/postgis:dev_diplodocus
+    environment:
+      - POSTGRES_PASSWD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${LOCAL_DATABASE}:/data 
+    networks:
+      - geo-postgres-compose-network
+  
+  geo-pgadmin-compose:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "test@vizzuality.com"
+      PGADMIN_DEFAULT_PASSWORD: "PgAdmin2019!"
+    ports:
+      - "16543:80"
+    depends_on:
+      - geo-postgres-compose
+    networks:
+      - geo-postgres-compose-network
+
+  geopredictor:
     build: .
     ports:
       - "6868:6868"
     command: develop
     volumes:
       - "./GeoPredictor:/GeoPredictor/GeoPredictor"
-     depends_on:
-    - postgres-compose
-    - pgadmin-compose
+      - './data:/data/'
+    depends_on:
+    - geo-postgres-compose
+    - geo-pgadmin-compose
     networks:
-      - postgres-compose-network
+      - geo-postgres-compose-network
     restart: always
     environment:
       PORT: 6868
@@ -20,30 +45,8 @@ services:
       user: postgres
       password: postgres
       psqlPort: 5432
-  postgres-compose:
-    container_name: 'GeoPredictor-pdb'
-    image: geographica/postgis:dev_diplodocus
-    environment:
-      POSTGRES_PASSWD: "postgres"
-    ports:
-      - "5432:5432"
-    expose:
-        - '5432'
-    volumes:
-      - ${LOCAL_DATABASE}:/data 
-    networks:
-      - postgres-compose-network
-  pgadmin-compose:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: "test@vizzuality.com"
-      PGADMIN_DEFAULT_PASSWORD: "PgAdmin2019!"
-    ports:
-      - "16543:80"
-    depends_on:
-      - postgres-compose
-    networks:
-      - postgres-compose-network
+
 networks: 
-  postgres-compose-network:
+  geo-postgres-compose-network:
     driver: bridge
+ 
