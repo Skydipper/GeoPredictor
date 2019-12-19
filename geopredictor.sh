@@ -10,7 +10,7 @@ case "$1" in
         docker-compose -f docker-compose-develop.yml build && docker-compose -f docker-compose-develop.yml up
         ;;
   *)
-        echo "Usage: validator.sh {develop}" >&2
+        echo "Usage: geopredictor.sh {develop}" >&2
         exit 1
         ;;
 esac

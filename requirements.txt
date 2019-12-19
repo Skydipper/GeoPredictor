@@ -1,3 +1,5 @@
 flask==1.1.1
-pymongo
+CTRegisterMicroserviceFlask==0.5.0
+psycopg2== 1.2.11
+SQLAlchemy== 1.2.11
 jsonschema

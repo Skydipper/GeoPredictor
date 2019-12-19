@@ -1,20 +1,49 @@
 version: '3'
 services:
-  validator:
+  GeoPredictor:
     build: .
     ports:
-      - "6767:6767"
+      - "6868:6868"
     command: develop
     volumes:
-      - "./Validator:/validator/Validator"
-  mongodb:
-    container_name: 'validator-mongodb'
-    image: mongo:latest
+      - "./GeoPredictor:/GeoPredictor/GeoPredictor"
+     depends_on:
+    - postgres-compose
+    - pgadmin-compose
+    networks:
+      - postgres-compose-network
+    restart: always
+    environment:
+      PORT: 6868
+      HOST: "0.0.0.0"
+      database: test
+      user: postgres
+      password: postgres
+      psqlPort: 5432
+  postgres-compose:
+    container_name: 'GeoPredictor-pdb'
+    image: geographica/postgis:dev_diplodocus
+    environment:
+      POSTGRES_PASSWD: "postgres"
     ports:
-        - '27017:27017'
-    volumes:
-        - '~/docker/db/validatorMongo:/data/db'
+      - "5432:5432"
     expose:
-        - '27017'
-    command: "mongod --smallfiles --logpath=/var/log/mongodb/mongodb.log"
-
+        - '5432'
+    volumes:
+      - ${LOCAL_DATABASE}:/data 
+    networks:
+      - postgres-compose-network
+  pgadmin-compose:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "test@vizzuality.com"
+      PGADMIN_DEFAULT_PASSWORD: "PgAdmin2019!"
+    ports:
+      - "16543:80"
+    depends_on:
+      - postgres-compose
+    networks:
+      - postgres-compose-network
+networks: 
+  postgres-compose-network:
+    driver: bridge
