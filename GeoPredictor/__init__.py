@@ -25,11 +25,6 @@ class Database():
             
         return output
 
-@app.route('/')
-def hello_world(name='world'):
-    """A hello world func"""
-    return f"Hello {name}"
-
 @app.route('/model',  strict_slashes=False, methods=['GET'])
 def get_models():
     # Receive a payload and post it to mongo
@@ -42,11 +37,11 @@ def get_models():
         {'data': result}
     ), 200
 #
-#@app.route('/schema/<schema_id>',  strict_slashes=False, methods=['GET'])
-#def get_schema(schema_id):
-#    app.logger.info(f"id: {schema_id}")
-#    #function to get schema id from mongo
-#    logging.info(f'[GET]: Recieved {schema_id}')
+@app.route('/model/<model_id>',  strict_slashes=False, methods=['GET', 'POST'])
+#def get_prediction(model_id):
+#    app.logger.info(f"id: {model_id}")
+#    #function to get prediction from the selected model and region
+#    logging.info(f'[GET, POSTS]: Recieved {model_id}')
 #
 #    result = mongo_collection.find_one({"_id": ObjectId(schema_id)})
 #    app.logger.debug(result)
@@ -56,7 +51,7 @@ def get_models():
 #    })
 #
 #
-#@app.route('/schema/<schema_id>/validate',  strict_slashes=False, methods=['POST'])
+@app.route('/model/<model_id>/<band>/<z>/<x>/<y>',  strict_slashes=False, methods=['GET'])
 #def validate(schema_id):
 #    app.logger.info(f"id: {schema_id}")
 #    #function to get schema id from mongo
