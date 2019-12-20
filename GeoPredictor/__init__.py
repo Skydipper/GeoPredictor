@@ -4,6 +4,7 @@ import logging
 
 from GeoPredictor.middleware import parse_payload
 from GeoPredictor.validators import validate_schema_id
+from sqlalchemy import create_engine
 #from bson.objectid import ObjectId
 import json
 import jsonschema
@@ -11,25 +12,35 @@ import jsonschema
 app = Flask(__name__)
 logging.basicConfig(level="DEBUG")
 
-#mongo_client = MongoClient('mongodb', 27017)
-#mongo_db = mongo_client.test_database
-#mongo_collection = mongo_db.test_collection
+class Database():
+    # replace the user, password, hostname and database according to your configuration according to your information
+    engine = create_engine('postgresql://postgres:postgres@geo-postgres-compose:5432/geomodels')
+    def __init__(self):
+        self.connection = self.engine.connect()
+        print("DB Instance created")
+    
+    def Query(self, query):
+        fetchQuery = self.connection.execute(f"{query}")
+        output = [{column: value for column, value in rowproxy.items()} for rowproxy in fetchQuery]
+            
+        return output
 
 @app.route('/')
 def hello_world(name='world'):
     """A hello world func"""
     return f"Hello {name}"
 
-#@app.route('/schema',  strict_slashes=False, methods=['POST'])
-#def post_schema():
-#    # Receive a payload and post it to mongo
-#    payload = request.json
-#    app.logger.debug(payload)
-#    # function to post schema
-#    result = mongo_collection.insert_one(payload).inserted_id
-#    return jsonify(
-#        {'data': str(result)}
-#    ), 200
+@app.route('/model',  strict_slashes=False, methods=['GET'])
+def get_models():
+    # Receive a payload and post it to mongo
+    ##payload = request.json
+    db = Database()
+    result = db.Query('select * from public.model')
+    app.logger.debug(result)
+    # function to post schema
+    return jsonify(
+        {'data': result}
+    ), 200
 #
 #@app.route('/schema/<schema_id>',  strict_slashes=False, methods=['GET'])
 #def get_schema(schema_id):
