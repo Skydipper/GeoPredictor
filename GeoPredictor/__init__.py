@@ -37,7 +37,7 @@ def get_models():
         {'data': result}
     ), 200
 #
-@app.route('/model/<model_id>',  strict_slashes=False, methods=['GET', 'POST'])
+#@app.route('/model/<model_id>',  strict_slashes=False, methods=['GET', 'POST'])
 #def get_prediction(model_id):
 #    app.logger.info(f"id: {model_id}")
 #    #function to get prediction from the selected model and region
@@ -51,7 +51,7 @@ def get_models():
 #    })
 #
 #
-@app.route('/model/<model_id>/<band>/<z>/<x>/<y>',  strict_slashes=False, methods=['GET'])
+#@app.route('/model/<model_id>/<band>/<z>/<x>/<y>',  strict_slashes=False, methods=['GET'])
 #def validate(schema_id):
 #    app.logger.info(f"id: {schema_id}")
 #    #function to get schema id from mongo
