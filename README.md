@@ -9,6 +9,7 @@ The knowledge sorce came from this [medium article](https://medium.com/@renato.g
 You will need to have installed docker and docker-compose; also you will  need to have control tower and geostore microservices up and running  
 run `sh geopredictor.sh develop` 
  After pgadmin is up and running you can `http://0.0.0.0:16543/` to load into pg-admin
+ for the microservice endpoint you should be able to access `http://0.0.0.0:6868/`
+ 
  you need to create a new server connection and in network add the docker network name, the port used on postgres and the login info (all available on the env variables)
 
- 
