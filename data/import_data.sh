@@ -14,7 +14,7 @@ then
 else
     echo 'NOTICE:  Database does not exist; creating ${THE_DB} ...'
     ## this will help us create the database
-	${PSQL} -U ${THE_USER}<<OMG
+	psql -U ${THE_USER}<<OMG
 	CREATE DATABASE ${THE_DB};
 OMG
 
