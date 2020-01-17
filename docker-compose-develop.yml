@@ -8,7 +8,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ${LOCAL_DATABASE}:/data 
+      - ${LOCAL_DATABASE}:/data
+      - ./data:/data_import 
     networks:
       - geo-postgres-compose-network
   

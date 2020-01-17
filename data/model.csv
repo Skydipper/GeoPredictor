@@ -1,0 +1,2 @@
+id, uid, model_name, model_description, model_type, input_image_id, output_image_id, n_versions, model_architecture
+1,6efd9376-3905-11ea-a137-2e728ce88125, test, lorem ipsum blabla, segmentation, 9170ca86-3905-11ea-a137-2e728ce88125, 96e71d8a-3905-11ea-a137-2e728ce88125, 10,lerele
