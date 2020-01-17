@@ -13,11 +13,11 @@ then
     echo 'NOTICE:  Database '${THE_DB}' exists; Generating tables...'
 else
     echo 'NOTICE:  Database does not exist; creating ${THE_DB} ...'
-    ### this will help us create the database
-	#${PSQL} -U ${THE_USER}<<OMG
-	#CREATE DATABASE ${THE_DB};
-#OMG
-#
+    ## this will help us create the database
+	${PSQL} -U ${THE_USER}<<OMG
+	CREATE DATABASE ${THE_DB};
+OMG
+
 fi
 
 ## this will help us create the database model
