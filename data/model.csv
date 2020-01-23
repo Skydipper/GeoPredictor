@@ -1,2 +1,2 @@
-,model_name,model_type,model_architecture,model_description,input_dataset_id,output_dataset_id,composite_method,status,eeified,deployed
-0,segmentation_0_1,segmentation,segnet,,2,3,,SUCCEEDED,True,True
+id;model_name;model_type;model_architecture;model_description;input_dataset_id;output_dataset_id;status;eeified;deployed;n_versions
+0;segmentation_0_1;segmentation;segnet;;2;3;SUCCEEDED;true;true;1

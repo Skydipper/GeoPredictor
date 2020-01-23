@@ -28,51 +28,61 @@ echo "NOTICE:  finish deleting tables."
 psql -U ${THE_USER} ${THE_DB}<<OMG
 CREATE TABLE model (
 	id INT PRIMARY KEY,
-	uid TEXT,
 	model_name TEXT,
-	model_description TEXT,
 	model_type TEXT,
-	input_image_id TEXT,
-	output_image_id TEXT,
-	n_versions INT,
-	model_architecture TEXT
+	model_architecture TEXT,
+	model_description TEXT,
+	input_dataset_id TEXT,
+	output_dataset_id TEXT,
+	status TEXT,
+	eeified BOOL,
+	deployed BOOL,
+	n_versions INT
+	
 );
 CREATE TABLE model_versions (
 	id INT PRIMARY KEY,
 	model_id TEXT,
 	geostore_id TEXT,
-	version INT,
+	sample_size INT,
 	training_params JSONB,
-	status INT
+	version INT,
+	status TEXT,
+	input_image_id INT,
+	output_image_id INT
 );
 CREATE TABLE image (  
 	id INT PRIMARY KEY,
-	uid TEXT,
-	name TEXT,
-	dataset_id TEXT,
-	band_selection INT[],
+	dataset_id INT,
+	band_selections TEXT[],
 	scale INT,
 	init_date DATE,
 	end_date DATE,
 	composite_method TEXT,
 	status INT,
-	bands_min_max JSONB
+	bands_min_max JSONB,
+	name TEXT
 );
 CREATE TABLE dataset (
 	id INT PRIMARY KEY,
-	uid TEXT,
-	dataset_id INT,
+	slug TEXT,
 	name TEXT,
-	bands JSONB,
-	rgb_bands JSONB,
-	provider INT
+	bands TEXT[],
+	rgb_bands TEXT[],
+	provider TEXT,
+	dataset_id TEXT
+	
+	
+	
+	
 );
 OMG
 echo "NOTICE:  finish creating tables."
 for NAME in ${TABLES}; do
+	echo "TABLE:  ${NAME}"
 	psql -U ${THE_USER} ${THE_DB} <<OMG
     DELETE FROM ${NAME}; 
-    COPY ${NAME} FROM '${THE_DIR}${NAME}.csv' delimiter ',' CSV header;
+    COPY ${NAME} FROM '${THE_DIR}${NAME}.csv' quote '^' delimiter ';' CSV header;
 OMG
 done
 

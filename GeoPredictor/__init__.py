@@ -1,13 +1,27 @@
 from flask import Flask, request, jsonify
 import CTRegisterMicroserviceFlask
 import logging
+import ee
 
+from GeoPredictor.services import .
 from GeoPredictor.middleware import parse_payload
 from GeoPredictor.validators import validate_schema_id
+
 from sqlalchemy import create_engine
 #from bson.objectid import ObjectId
 import json
 import jsonschema
+
+
+gee = SETTINGS.get('gee')
+gee_credentials = ServiceAccountCredentials.from_p12_keyfile(
+    gee.get('service_account'),
+    gee.get('privatekey_file'),
+    scopes=ee.oauth.SCOPE
+)
+ee.Initialize(gee_credentials)
+ee.data.setDeadline(60000)
+
 
 app = Flask(__name__)
 logging.basicConfig(level="DEBUG")
