@@ -1,43 +1,72 @@
 from flask import Flask, request, jsonify
+import os
 import CTRegisterMicroserviceFlask
 import logging
+#from google.auth import app_engine
 import ee
 
-from GeoPredictor.services import .
+from GeoPredictor.services import Database, predict
 from GeoPredictor.middleware import parse_payload
-from GeoPredictor.validators import validate_schema_id
+from GeoPredictor.validators import validate_prediction_params
 
-from sqlalchemy import create_engine
+
 #from bson.objectid import ObjectId
 import json
 import jsonschema
 
-
-gee = SETTINGS.get('gee')
-gee_credentials = ServiceAccountCredentials.from_p12_keyfile(
-    gee.get('service_account'),
-    gee.get('privatekey_file'),
-    scopes=ee.oauth.SCOPE
-)
-ee.Initialize(gee_credentials)
-ee.data.setDeadline(60000)
-
-
+# Initialization of Flask application.
 app = Flask(__name__)
-logging.basicConfig(level="DEBUG")
 
-class Database():
-    # replace the user, password, hostname and database according to your configuration according to your information
-    engine = create_engine('postgresql://postgres:postgres@geo-postgres-compose:5432/geomodels')
-    def __init__(self):
-        self.connection = self.engine.connect()
-        print("DB Instance created")
-    
-    def Query(self, query):
-        fetchQuery = self.connection.execute(f"{query}")
-        output = [{column: value for column, value in rowproxy.items()} for rowproxy in fetchQuery]
-            
-        return output
+# CT Registering
+#PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#BASE_DIR = os.path.dirname(PROJECT_DIR)
+#
+#
+#def load_config_json(name):
+#    json_path = os.path.abspath(os.path.join(BASE_DIR, 'microservice')) + '/' + name + '.json'
+#    with open(json_path) as data_file:
+#        info = json.load(data_file)
+#    return info
+#
+#info = load_config_json('register')
+#swagger = load_config_json('swagger')
+#CTRegisterMicroserviceFlask.register(
+#    app=app,
+#    name='aqueduct',
+#    info=info,
+#    swagger=swagger,
+#    mode=CTRegisterMicroserviceFlask.AUTOREGISTER_MODE if os.getenv('CT_REGISTER_MODE') and os.getenv(
+#        'CT_REGISTER_MODE') == 'auto' else CTRegisterMicroserviceFlask.NORMAL_MODE,
+#    ct_url=os.getenv('CT_URL'),
+#    url=os.getenv('LOCAL_URL')
+#)
+
+@app.before_first_request
+def setup_logLevels():
+    """Sets up Earth Engine authentication."""
+    logging.basicConfig(level="DEBUG")
+    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
+#@app.before_first_request
+#def setup_gcAccess():
+#    """Sets up Earth Engine authentication."""
+#    gae_credentials = app_engine.Credentials()
+#    client = storage.Client(credentials=gae_credentials)
+#    config.CATALOG_BUCKET = client.get_bucket("earthengine-catalog")
+
+@app.before_first_request
+def setup_ee():
+    """Sets up Earth Engine authentication."""
+    #private_key_file = SETTINGS.get('gee').get('privatekey_file')
+    private_key = os.getenv('EE_PRIVATE_KEY')
+    credentials = ee.ServiceAccountCredentials(email=None, key_data=private_key)
+    ee.Initialize(credentials=credentials, use_cloud_api=True)
+    ee.data.setDeadline(60000)
+    app.logger.info("EE Initialized")
+
+################################################################################
+# Route handlers for entry points
+################################################################################
 
 @app.route('/model',  strict_slashes=False, methods=['GET'])
 def get_models():
@@ -50,7 +79,44 @@ def get_models():
     return jsonify(
         {'data': result}
     ), 200
-#
+
+@app.route('/model/test',  strict_slashes=False, methods=['GET', 'POST'])
+def get_prediction(**kwargs):
+    #app.logger.info(f"id: {model_id}")
+    #function to get prediction from the selected model and region
+    app.logger.info(f'[GET, POSTS]: Recieved {kwargs}')
+    tests = predict()
+    #result = mongo_collection.find_one({"_id": ObjectId(schema_id)})
+    #app.logger.debug(result)
+    #del result["_id"]
+    return jsonify({
+        'data': tests
+    })
+
+
+@app.errorhandler(403)
+def forbidden(e):
+    return error(status=403, detail='Forbidden')
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return error(status=404, detail='Not Found')
+
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return error(status=405, detail='Method Not Allowed')
+
+
+@app.errorhandler(410)
+def gone(e):
+    return error(status=410, detail='Gone')
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return error(status=500, detail='Internal Server Error')
 #@app.route('/model/<model_id>',  strict_slashes=False, methods=['GET', 'POST'])
 #def get_prediction(model_id):
 #    app.logger.info(f"id: {model_id}")

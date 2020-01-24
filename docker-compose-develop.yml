@@ -18,6 +18,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: "test@vizzuality.com"
       PGADMIN_DEFAULT_PASSWORD: "PgAdmin2019!"
+    volumes:
+      - ./data:/data
     ports:
       - "16543:80"
     depends_on:
@@ -39,6 +41,8 @@ services:
     networks:
       - geo-postgres-compose-network
     restart: always
+    env_file:
+      - .env
     environment:
       PORT: 6868
       HOST: "0.0.0.0"

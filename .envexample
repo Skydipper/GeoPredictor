@@ -1,0 +1,11 @@
+API_VERSION=v1
+CT_URL=mymachine:9000
+LOCAL_URL=mymachine:6868
+POSTGRES_PASSWD=postgres
+LOCAL_DATABASE=<path to empty folder where to storage DB>
+POSTGRES_CONNECTION=postgresql://postgres:postgres@geo-postgres-compose:5432/geomodels
+POSTGRES_USER=postgres
+POSTGRES_PASSWD=postgres
+PGADMIN_DEFAULT_EMAIL=test@vizzuality.com
+PGADMIN_DEFAULT_PASSWORD=PgAdmin2019
+EE_PRIVATE_KEY=
