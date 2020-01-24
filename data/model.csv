@@ -1,2 +1,3 @@
-id;model_name;model_type;model_architecture;model_description;input_dataset_id;output_dataset_id;status;eeified;deployed;n_versions
-0;segmentation_0_1;segmentation;segnet;;2;3;SUCCEEDED;true;true;1
+,model_name,model_type,model_description,output_image_id
+0,segmentation_0_1,segmentation,,1
+1,regression_2,regression,,2
