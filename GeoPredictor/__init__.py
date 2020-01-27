@@ -9,6 +9,7 @@ import ee
 from GeoPredictor.services import Database, predict
 from GeoPredictor.middleware import parse_payload, sanitize_parameters, get_geo_by_hash
 from GeoPredictor.validators import validate_prediction_params
+from GeoPredictor.errors import error
 
 
 #from bson.objectid import ObjectId
@@ -44,7 +45,7 @@ setup_logLevels()
 app = Flask(__name__)   
 
 
-# CT Registering
+# CT Registering blablabla
 #PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #BASE_DIR = os.path.dirname(PROJECT_DIR)
 #

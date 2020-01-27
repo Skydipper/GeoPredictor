@@ -49,14 +49,18 @@ def validate_prediction_params(func):
             }
             
         }
-        rArgs = {**request.args, **request.json}
-        kwargs.update(rArgs)  
-        logging.info(f"[VALIDATOR - prediction params]: {kwargs}")
-        validator = Validator(validation_schema,allow_unknown=True, purge_unknown=True)
-        logging.info(f"[VALIDATOR - prediction params]: {validator.validate(kwargs)}")
-        if not validator.validate(kwargs):
-            return error(status=400, detail=validator.errors)
-        kwargs['sanitized_params'] = validator.normalized(kwargs)
-        return func(*args, **kwargs)
+        try:
+            rArgs = {**request.args, **request.json}
+            kwargs.update(rArgs)  
+            logging.info(f"[VALIDATOR - prediction params]: {kwargs}")
+            validator = Validator(validation_schema, allow_unknown=True, purge_unknown=True)
+            logging.info(f"[VALIDATOR - prediction params]: {validator.validate(kwargs)}")
+            if not validator.validate(kwargs):
+                return error(status=400, detail=validator.errors)
+            kwargs['sanitized_params'] = validator.normalized(kwargs)
+            return func(*args, **kwargs)
+        except Exception as e:
+            output = str(e)
+            return error(status=404, detail='body params not found')
 
     return wrapper

@@ -2,7 +2,7 @@
 from flask import jsonify
 
 
-def error (status=500, detail = 'generic error'):
+def error(status=500, detail='generic error'):
     error = {
         'status': status,
         'detail': detail
