@@ -1,8 +1,36 @@
 from flask import request
 from functools import wraps
-
+import logging
 from GeoPredictor.errors import GeostoreNotFound
 from GeoPredictor.services import GeostoreService
+
+
+def remove_keys(keys, dictionary):
+    for key in keys:
+        try:
+            del dictionary[key]
+        except KeyError:
+            pass
+    return dictionary
+
+
+def sanitize_parameters(func):
+    """Sets any queryparams in the kwargs"""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            logging.info(f'[middleware] [sanitizer] args: {args}')
+            myargs = dict(request.args)
+            # Exclude params like loggedUser here
+            sanitized_args = remove_keys(['loggedUser'], myargs)
+            kwargs['params'] = sanitized_args
+        except GeostoreNotFound:
+            return error(status=404, detail='body params not found')
+
+        return func(*args, **kwargs)
+
+    return wrapper
 
 def parse_payload(func):
     """Get payload data"""

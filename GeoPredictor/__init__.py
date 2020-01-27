@@ -1,12 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Blueprint
 import os
+import sys
 import CTRegisterMicroserviceFlask
 import logging
 #from google.auth import app_engine
 import ee
 
 from GeoPredictor.services import Database, predict
-from GeoPredictor.middleware import parse_payload
+from GeoPredictor.middleware import parse_payload, sanitize_parameters, get_geo_by_hash
 from GeoPredictor.validators import validate_prediction_params
 
 
@@ -14,8 +15,34 @@ from GeoPredictor.validators import validate_prediction_params
 import json
 import jsonschema
 
+
+
+def setup_logLevels(level="DEBUG"):
+    """Sets up Earth Engine authentication."""
+    logging.basicConfig(level=level)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(name)s:%(funcName)s - %(lineno)d:  %(message)s',
+                              '%Y%m%d-%H:%M%p')
+
+    root = logging.getLogger()
+    root.setLevel(level)
+    error_handler = logging.StreamHandler(sys.stderr)
+    error_handler.setLevel(logging.WARN)
+    error_handler.setFormatter(formatter)
+    root.addHandler(error_handler)
+
+    output_handler = logging.StreamHandler(sys.stdout)
+    output_handler.setLevel(level)
+    output_handler.setFormatter(formatter)
+    root.addHandler(output_handler)
+    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+    logging.getLogger('googleapiclient.discovery').setLevel(logging.ERROR)
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+setup_logLevels()
+
 # Initialization of Flask application.
-app = Flask(__name__)
+app = Flask(__name__)   
+
 
 # CT Registering
 #PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,13 +67,6 @@ app = Flask(__name__)
 #    ct_url=os.getenv('CT_URL'),
 #    url=os.getenv('LOCAL_URL')
 #)
-
-@app.before_first_request
-def setup_logLevels():
-    """Sets up Earth Engine authentication."""
-    logging.basicConfig(level="DEBUG")
-    logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
-
 #@app.before_first_request
 #def setup_gcAccess():
 #    """Sets up Earth Engine authentication."""
@@ -54,7 +74,6 @@ def setup_logLevels():
 #    client = storage.Client(credentials=gae_credentials)
 #    config.CATALOG_BUCKET = client.get_bucket("earthengine-catalog")
 
-@app.before_first_request
 def setup_ee():
     """Sets up Earth Engine authentication."""
     #private_key_file = SETTINGS.get('gee').get('privatekey_file')
@@ -63,6 +82,9 @@ def setup_ee():
     ee.Initialize(credentials=credentials, use_cloud_api=True)
     ee.data.setDeadline(60000)
     app.logger.info("EE Initialized")
+
+
+setup_ee()
 
 ################################################################################
 # Route handlers for entry points
@@ -80,19 +102,24 @@ def get_models():
         {'data': result}
     ), 200
 
-@app.route('/model/test',  strict_slashes=False, methods=['GET', 'POST'])
-def get_prediction(**kwargs):
+@app.route('/model/<model_id>',  strict_slashes=False, methods=['GET', 'POST'])
+@sanitize_parameters
+@validate_prediction_params
+@get_geo_by_hash
+def get_prediction(model_id, **kwargs):
     #app.logger.info(f"id: {model_id}")
     #function to get prediction from the selected model and region
+    app.logger.info(f'[GET, POSTS]: Recieved {model_id}')
     app.logger.info(f'[GET, POSTS]: Recieved {kwargs}')
-    tests = predict()
+    tests = predict(**kwargs)
     #result = mongo_collection.find_one({"_id": ObjectId(schema_id)})
     #app.logger.debug(result)
     #del result["_id"]
     return jsonify({
         'data': tests
-    })
+    }), 200
 
+# Routing
 
 @app.errorhandler(403)
 def forbidden(e):

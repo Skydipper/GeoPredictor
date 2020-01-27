@@ -22,6 +22,7 @@ to_list = lambda v: json.loads(v)
 
 def validate_prediction_params(func):
     """Water Risk atlas parameters validation"""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         validation_schema = {
@@ -50,9 +51,9 @@ def validate_prediction_params(func):
         }
         rArgs = {**request.args, **request.json}
         kwargs.update(rArgs)  
-        logging.debug(f"[VALIDATOR - prediction params]: {kwargs}")
-        validator = Validator(validation_schema, purge_unknown=True)
-
+        logging.info(f"[VALIDATOR - prediction params]: {kwargs}")
+        validator = Validator(validation_schema,allow_unknown=True, purge_unknown=True)
+        logging.info(f"[VALIDATOR - prediction params]: {validator.validate(kwargs)}")
         if not validator.validate(kwargs):
             return error(status=400, detail=validator.errors)
         kwargs['sanitized_params'] = validator.normalized(kwargs)

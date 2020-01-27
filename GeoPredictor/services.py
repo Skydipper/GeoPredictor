@@ -46,6 +46,7 @@ class Database():
         return output
 
 def predict(**kwargs):
+	logging.info(kwargs)
 	model_name = 'segmentation_0_1'
 	db = Database()
 	result = db.Query(f"select * from model where model_name='{model_name}'")
