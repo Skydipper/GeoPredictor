@@ -69,8 +69,7 @@ CREATE TABLE dataset (
 	name TEXT,
 	bands TEXT[],
 	rgb_bands TEXT[],
-	provider TEXT,
-	dataset_id TEXT
+	provider TEXT
 	
 	
 	

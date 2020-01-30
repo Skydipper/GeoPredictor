@@ -80,7 +80,7 @@ def setup_ee():
     #private_key_file = SETTINGS.get('gee').get('privatekey_file')
     private_key = os.getenv('EE_PRIVATE_KEY')
     credentials = ee.ServiceAccountCredentials(email=None, key_data=private_key)
-    ee.Initialize(credentials=credentials, use_cloud_api=True)
+    ee.Initialize(credentials=credentials, use_cloud_api=False)
     ee.data.setDeadline(60000)
     app.logger.info("EE Initialized")
 
