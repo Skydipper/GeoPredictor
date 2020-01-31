@@ -14,6 +14,7 @@ services:
       - geo-postgres-compose-network
   
   geo-pgadmin-compose:
+    container_name: 'geo-pgadmin-compose'
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: "test@vizzuality.com"
@@ -28,13 +29,13 @@ services:
       - geo-postgres-compose-network
 
   geopredictor:
+    container_name: 'geopredictor'
     build: .
     ports:
       - "6868:6868"
     command: develop
     volumes:
-      - "./GeoPredictor:/GeoPredictor/GeoPredictor"
-      - './data:/data/'
+      - ./GeoPredictor:/validator/GeoPredictor
     depends_on:
     - geo-postgres-compose
     - geo-pgadmin-compose

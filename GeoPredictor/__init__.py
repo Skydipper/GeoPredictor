@@ -16,7 +16,15 @@ from GeoPredictor.errors import error
 import json
 import jsonschema
 
-
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 def setup_logLevels(level="DEBUG"):
     """Sets up Earth Engine authentication."""
@@ -96,7 +104,12 @@ def get_models():
     # Receive a payload and post it to mongo
     ##payload = request.json
     db = Database()
-    result = db.Query('select * from public.model')
+    query = """
+    SELECT model.model_name, model_type, model_description, model_versions.id as version_id, model_versions.model_architecture 
+    FROM model 
+    INNER JOIN model_versions ON model.id=model_versions.model_id
+    """
+    result = db.Query(query)
     app.logger.debug(result)
     # function to post schema
     return jsonify(

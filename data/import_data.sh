@@ -30,45 +30,40 @@ CREATE TABLE model (
 	id INT PRIMARY KEY,
 	model_name TEXT,
 	model_type TEXT,
-	model_architecture TEXT,
 	model_description TEXT,
-	input_dataset_id TEXT,
-	output_dataset_id TEXT,
-	status TEXT,
-	eeified BOOL,
-	deployed BOOL,
-	n_versions INT
-	
+	output_image_id INT
+		
 );
 CREATE TABLE model_versions (
 	id INT PRIMARY KEY,
-	model_id TEXT,
+	model_id INT,
+	model_architecture TEXT,
+	input_image_id INT,
+	output_image_id INT,
 	geostore_id TEXT,
 	sample_size INT,
 	training_params JSONB,
-	version INT,
-	status TEXT,
-	input_image_id INT,
-	output_image_id INT
+	version BIGINT,
+	data_status TEXT,
+	training_status TEXT,
+	eeified BOOL,
+	deployed BOOL
 );
 CREATE TABLE image (  
 	id INT PRIMARY KEY,
 	dataset_id INT,
-	band_selections TEXT[],
-	scale INT,
+	band_selections TEXT,
+	scale FLOAT,
 	init_date DATE,
 	end_date DATE,
-	composite_method TEXT,
-	status INT,
-	bands_min_max JSONB,
-	name TEXT
+	bands_min_max JSONB
 );
 CREATE TABLE dataset (
 	id INT PRIMARY KEY,
 	slug TEXT,
 	name TEXT,
-	bands TEXT[],
-	rgb_bands TEXT[],
+	bands TEXT,
+	rgb_bands TEXT,
 	provider TEXT
 	
 	
@@ -78,11 +73,24 @@ CREATE TABLE dataset (
 OMG
 echo "NOTICE:  finish creating tables."
 for NAME in ${TABLES}; do
-	echo "TABLE:  ${NAME}"
+	echo "TABLE: \033[94m ${NAME}\033[0m"
 	psql -U ${THE_USER} ${THE_DB} <<OMG
     DELETE FROM ${NAME}; 
     COPY ${NAME} FROM '${THE_DIR}${NAME}.csv' quote '^' delimiter ';' CSV header;
 OMG
 done
 
-echo "SUCCESS:  Tables import ready"
+# alter datatypes for tables image and dataset to convert band data from text onto an array
+echo "\033[92mSUCCESS:\033[0m  Formatting arrays..."
+psql -U ${THE_USER} ${THE_DB}<<OMG
+ALTER TABLE image
+ALTER COLUMN band_selections TYPE jsonb USING to_jsonb(band_selections);
+
+ALTER TABLE dataset
+ALTER COLUMN bands TYPE jsonb USING to_jsonb(bands);
+
+ALTER TABLE dataset
+ALTER COLUMN rgb_bands TYPE jsonb USING to_jsonb(rgb_bands);
+OMG
+
+echo "\033[92mSUCCESS:\033[0m  Tables import ready"

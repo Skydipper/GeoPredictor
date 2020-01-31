@@ -15,7 +15,6 @@ run `sh geopredictor.sh develop`
  
 In order to populate the DB you will need to update the data as you need on the `/data`  folder. 
 You will need to connect to the postgres container. To do so:
-`docker exec -it geo-postgres-compose /bin/bash
-`
+`docker exec -it geo-postgres-compose /bin/bash`
 `cd /data_import`
 `sh import_data.sh`

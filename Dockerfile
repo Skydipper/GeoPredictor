@@ -11,6 +11,6 @@ RUN pip install -r requirements.txt
 COPY entrypoint.sh entrypoint.sh
 
 EXPOSE 6868
-COPY ./GeoPredictor GeoPredictor
+COPY ./GeoPredictor /validator/GeoPredictor
 
 ENTRYPOINT ["./entrypoint.sh"]
