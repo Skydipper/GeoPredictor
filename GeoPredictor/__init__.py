@@ -85,12 +85,14 @@ app = Flask(__name__)
 
 def setup_ee():
     """Sets up Earth Engine authentication."""
-    #private_key_file = SETTINGS.get('gee').get('privatekey_file')
-    private_key = os.getenv('EE_PRIVATE_KEY')
-    credentials = ee.ServiceAccountCredentials(email=None, key_data=private_key)
-    ee.Initialize(credentials=credentials, use_cloud_api=False)
-    ee.data.setDeadline(60000)
-    app.logger.info("EE Initialized")
+    try:
+        private_key = os.getenv('EE_PRIVATE_KEY')
+        credentials = ee.ServiceAccountCredentials(email=None, key_data=private_key)
+        ee.Initialize(credentials=credentials, use_cloud_api=False)
+        ee.data.setDeadline(60000)
+        app.logger.info("EE Initialized")
+    except Exception as err:
+            return error(status=502, detail=f'{err}')
 
 
 setup_ee()
@@ -102,30 +104,31 @@ setup_ee()
 @app.route('/model',  strict_slashes=False, methods=['GET'])
 def get_models():
     # Receive a payload and post it to mongo
-    ##payload = request.json
-    db = Database()
-    query = """
-    SELECT model.model_name, model_type, model_description, model_versions.version as version, model_versions.model_architecture 
-    FROM model 
-    INNER JOIN model_versions ON model.id=model_versions.model_id
-    WHERE deployed is true
-    ORDER BY model_name ASC, version ASC 
-    """
-    result = db.Query(query)
-    app.logger.debug(result)
-    # function to post schema
-    return jsonify(
-        {'data': result}
-    ), 200
+    try:
+        db = Database()
+        query = """
+        SELECT model.model_name, model_type, model_description, model_versions.version as version, model_versions.model_architecture 
+        FROM model 
+        INNER JOIN model_versions ON model.id=model_versions.model_id
+        WHERE deployed is true
+        ORDER BY model_name ASC, version ASC 
+        """
+        result = db.Query(query)
+        app.logger.debug(result)
+        # function to post schema
+        return jsonify(
+            {'data': result}
+        ), 200
+    except Exception as err:
+            return error(status=502, detail=f'{err}')
 
-@app.route('/model/<model_id>',  strict_slashes=False, methods=['GET', 'POST'])
+@app.route('/model/<model_name>',  strict_slashes=False, methods=['GET', 'POST'])
 @sanitize_parameters
 @validate_prediction_params
-@get_geo_by_hash
-def get_prediction(model_id, **kwargs):
+#@get_geo_by_hash
+def get_prediction(**kwargs):
     #app.logger.info(f"id: {model_id}")
     #function to get prediction from the selected model and region
-    app.logger.info(f'[GET, POSTS]: Recieved {model_id}')
     app.logger.info(f'[GET, POSTS]: Recieved {kwargs}')
     tests = predict(**kwargs)
     #result = mongo_collection.find_one({"_id": ObjectId(schema_id)})

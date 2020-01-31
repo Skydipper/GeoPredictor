@@ -1,7 +1,7 @@
 from flask import request
 from functools import wraps
 import logging
-from GeoPredictor.errors import GeostoreNotFound
+from GeoPredictor.errors import GeostoreNotFound, error
 from GeoPredictor.services import GeostoreService
 
 
@@ -11,22 +11,29 @@ def remove_keys(keys, dictionary):
             del dictionary[key]
         except KeyError:
             pass
+        except Exception as err:
+            return error(status=502, detail=f'{err}')
     return dictionary
 
 
 def sanitize_parameters(func):
     """Sets any queryparams in the kwargs"""
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            logging.info(f'[middleware] [sanitizer] args: {args}')
-            myargs = dict(request.args)
+            logging.debug(f'[middleware] [sanitizer] args: {args}')
+            logging.debug(f'[middleware] [sanitizer] kargs: {kwargs}')
+
+            myargs={**kwargs, **request.args, **request.args.get('payload', {})}
+            logging.debug(f'[middleware] [sanitizer] User_args: {myargs}')
             # Exclude params like loggedUser here
+
             sanitized_args = remove_keys(['loggedUser'], myargs)
             kwargs['params'] = sanitized_args
         except GeostoreNotFound:
             return error(status=404, detail='body params not found')
+        except Exception as err:
+            return error(status=502, detail=f'{err}')
 
         return func(*args, **kwargs)
 
@@ -36,7 +43,7 @@ def parse_payload(func):
     """Get payload data"""
     @wraps(func)
     def wrapper(*args, **kwargs):
-        logging.info(f'[POST]: Recieved {payload}')
+        logging.debug(f'[POST]: Recieved {payload}')
         kwargs["payload"] = request.args.get('payload', {'payload': None})
         return func(*args, **kwargs)
     return wrapper
@@ -52,6 +59,8 @@ def get_geo_by_hash(func):
             kwargs["sanitized_params"]["geojson"] = geojson
         except GeostoreNotFound:
             return error(status=404, detail='Geostore not found')
+        except Exception as err:
+            return error(status=502, detail=f'{err}')
         
         return func(*args, **kwargs)
 

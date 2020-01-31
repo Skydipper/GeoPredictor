@@ -11,7 +11,7 @@ def error(status=500, detail='generic error'):
 
 class Error(Exception):
 
-    def __init__(self, message):
+    def __init__(self, message='generic error'):
         self.message = message
 
     @property
@@ -33,5 +33,8 @@ class DBError(Error):
     pass
 
 
-class GeocodeError(Error):
+class GeostoreError(Error):
+    pass
+
+class ModelError(Error):
     pass
