@@ -35,7 +35,7 @@ services:
       - "6868:6868"
     command: develop
     volumes:
-      - ./GeoPredictor:/validator/GeoPredictor
+      - ./GeoPredictor:/GeoPredictor
     depends_on:
     - geo-postgres-compose
     - geo-pgadmin-compose
