@@ -105,9 +105,11 @@ def get_models():
     ##payload = request.json
     db = Database()
     query = """
-    SELECT model.model_name, model_type, model_description, model_versions.id as version_id, model_versions.model_architecture 
+    SELECT model.model_name, model_type, model_description, model_versions.version as version, model_versions.model_architecture 
     FROM model 
     INNER JOIN model_versions ON model.id=model_versions.model_id
+    WHERE deployed is true
+    ORDER BY model_name ASC, version ASC 
     """
     result = db.Query(query)
     app.logger.debug(result)
