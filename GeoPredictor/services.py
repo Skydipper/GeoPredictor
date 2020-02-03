@@ -1,4 +1,5 @@
 import ee
+import asyncio
 from GeoPredictor import ee_collection_specifics
 import logging
 import os
@@ -66,10 +67,19 @@ def normalize_ee_images(image, collection, values):
 			
 	return image_new
 
-def predict(**kwargs):
+def predict(loop, **kwargs):
+	"""
+	This function uses GEE to generate a set of tile urls to serve the model selected predicion for the user area selection.
+
+	TODO: this will need a refactor
+	"""
 	try:
 		# Test if the user selected model is on the database and deployed, this will then provide the Model info.
+		# --- PARAMS 
 		db = Database()
+		geometry = kwargs['sanitized_params']['geojson']
+		EE_TILES = 'https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}'
+
 		logging.debug('launching query...')
 		query = f"""
 		SELECT model.model_name, model_type, model_description,model_versions.input_image_id,model_versions.output_image_id, model_versions.version as version, model_versions.model_architecture, model_versions.training_params 
@@ -91,9 +101,8 @@ def predict(**kwargs):
 			logging.error(modelData)
 			raise ModelError('too many models')
 
-		logging.debug(f"DB: {modelData}")
-
 		# Get the image input and output information
+		# TODO: right now we are not really separating which is the input and witch is the output, we should 
 		
 		query_2 = f"""
 		SELECT  dataset.slug, dataset.name, dataset.bands, dataset.rgb_bands, dataset.provider, image.band_selections, image.scale, image.bands_min_max
@@ -102,12 +111,17 @@ def predict(**kwargs):
 		WHERE image.id in ({modelData[0]["input_image_id"]}, {modelData[0]["output_image_id"]})
 			"""
 		iImageData, oImageData = db.Query(query_2)
+		
 		logging.debug(f'[INPUT]: {iImageData}')
 		logging.debug(f'[OUTPUT]: {oImageData}')
 		
 		
 		
 		# Create composite
+		# TODO: 
+		# * right now the composite specifics are on a separate file, `ee_collection_specifics` this is does not scale at all, we should add this information to the DB  to image and dataset info
+		# * asyncronously fetch mapids, as generating the info might take some time
+
 		image = ee_collection_specifics.Composite(iImageData['slug'])(kwargs['sanitized_params']['init_date'], kwargs['sanitized_params']['end_date'])
 		
 		# Normalize Input image composite
@@ -138,8 +152,8 @@ def predict(**kwargs):
 		predictions = model.predictImage(image.toArray()).arrayFlatten([modelData[0]["training_params"]["out_bands"]])
 
 		# Get the Geometry information
-		geometry = kwargs['sanitized_params']['geojson']
-		logging.debug(f"[MY GEOM]{geometry}")
+		
+		#logging.debug(f"[MY GEOM]{geometry}")
 		polygon = ee.Geometry.Polygon(json.loads(geometry).get('features')[0].get('geometry').get('coordinates'))
 		
 		# Clip the prediction area with the polygon
@@ -159,28 +173,44 @@ def predict(**kwargs):
 			segmentation = predictions.expression(expression)
 			predictions = predictions.addBands(segmentation.mask(segmentation).select(['constant'], ['categories']))
 
-		EE_TILES = 'https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}'
+		# Prepare the output
+		# TODO: We will need to set up a REDIS to cache mapids and and GCS to store images and tiles for prediction so we don't get lost and a redirection/proxy functionality.
+		logging.debug(f"[ASYNC] Init")
+		
 
-		logging.debug(f"[INPUT- rgbBands]: {iImageData['rgb_bands']}")
-		iMapid = image.getMapId({'bands': ['B4', 'B3', 'B2'], 'min': 0, 'max': 1})
-
+		#logging.debug(f"[INPUT- rgbBands]: {iImageData['rgb_bands']}")
+		
+		iMapids = []
+		iParams =[{'bands': ['B4', 'B3', 'B2'], 'min': 0, 'max': 1}]
+		iMapids.append(image.getMapId(iParams[0]))
+		
+		oMapids = []
 		if  modelData[0]["model_type"] == 'segmentation':
-			oMapid = predictions.getMapId({'bands': ['categories'], 'min': 1, 'max': len(modelData[0]["training_params"]["out_bands"])})
+			oParams =[{'bands': ['categories'], 'min': 1, 'max': len(modelData[0]["training_params"]["out_bands"])}]
 		else:
-			oMapid = {}
-			#for band in modelData[0]["training_params"]["out_bands"]:
-			#	mapid = predictions.getMapId({'bands': [band], 'min': 0, 'max': 1})
-
-
+			oParams =[{'bands': [band], 'min': 0, 'max': 1} for band in modelData[0]["training_params"]["out_bands"]]
+		
+		
+		asyncio.set_event_loop(loop)
+		logging.debug(f"[ASYNC] Initiating loop.")
+		tasks = [get_MapId(predictions, m) for m in oParams]
+		# Fulfill promises
+		logging.debug(f"'[ASYNC] looping through functios .'")
+		oMapids = loop.run_until_complete(asyncio.gather(*tasks))
+		
 		result = {
 			'centroid': polygon.centroid().getInfo().get('coordinates')[::-1],
-			'inputImage': EE_TILES.format(**iMapid),
-			'outputImage': EE_TILES.format(**oMapid),
+			'inputImage': [EE_TILES.format(**iMapid) for iMapid in iMapids],
+			'outputImage': [EE_TILES.format(**oMapid) for oMapid in oMapids],
 		}
 		return result
 	except Exception as err:
 		raise Error(err)
+	finally:
+		loop.close()
+		
 
-
-
+async def get_MapId(image, params):
+			logging.debug(f"[ASYNC loop]: {params}")
+			return image.getMapId(params)
 

@@ -3,6 +3,8 @@ Receives a geoJson/geostore and a model and generates a prediction.
 
 Lists all models and allows filtering by datasetID, type, architecture...
 
+[Working Postman collection with endpoints](https://www.getpostman.com/collections/f9a3732641b8a2dfebbc)
+
 The knowledge sorce came from this [medium article](https://medium.com/@renato.groffe/postgresql-pgadmin-4-docker-compose-montando-rapidamente-um-ambiente-para-uso-55a2ab230b89)
 
 ## development

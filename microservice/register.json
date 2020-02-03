@@ -2,11 +2,35 @@
 	"name": "GeoPredictor",
 	"endpoints": [
 		{
-			"path": "/v1/geopredictor/schema",
+			"path": "/v1/geopredictor/model",
+			"method": "GET",
+			"redirect": {
+				"method": "GET",
+				"path": "/api/v1/geopredictor/model"
+			}
+		},
+		{
+			"path": "/v1/geopredictor/model",
 			"method": "POST",
 			"redirect": {
 				"method": "POST",
-				"path": "/api/v1/geopredictor/schema"
+				"path": "/api/v1/geopredictor/model"
+			}
+		},
+		{
+			"path": "/v1/geopredictor/model/:model_name",
+			"method": "POST",
+			"redirect": {
+				"method": "POST",
+				"path": "/api/v1/geopredictor/model/:model_name"
+			}
+		},
+		{
+			"path": "/v1/geopredictor/model/:model_name",
+			"method": "GET",
+			"redirect": {
+				"method": "GET",
+				"path": "/api/v1/geopredictor/model/:model_name"
 			}
 		}
 	]

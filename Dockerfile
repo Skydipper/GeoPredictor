@@ -11,6 +11,7 @@ RUN pip install -r requirements.txt
 COPY entrypoint.sh entrypoint.sh
 
 EXPOSE 6868
-COPY ./GeoPredictor api/GeoPredictor
+COPY ./GeoPredictor GeoPredictor
+COPY ./microservice microservice
 
 ENTRYPOINT ["./entrypoint.sh"]

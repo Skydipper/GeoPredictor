@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, Blueprint
 import os
 import sys
+import asyncio
 import CTRegisterMicroserviceFlask
 import logging
 #from google.auth import app_engine
@@ -14,7 +15,6 @@ from GeoPredictor.errors import error
 
 #from bson.objectid import ObjectId
 import json
-import jsonschema
 
 class bcolors:
     HEADER = '\033[95m'
@@ -52,33 +52,8 @@ setup_logLevels()
 # Initialization of Flask application.
 app = Flask(__name__)   
 
-
-# CT Registering blablabla
-#PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#BASE_DIR = os.path.dirname(PROJECT_DIR)
-#
-#
-#def load_config_json(name):
-#    json_path = os.path.abspath(os.path.join(BASE_DIR, 'microservice')) + '/' + name + '.json'
-#    with open(json_path) as data_file:
-#        info = json.load(data_file)
-#    return info
-#
-#info = load_config_json('register')
-#swagger = load_config_json('swagger')
-#CTRegisterMicroserviceFlask.register(
-#    app=app,
-#    name='aqueduct',
-#    info=info,
-#    swagger=swagger,
-#    mode=CTRegisterMicroserviceFlask.AUTOREGISTER_MODE if os.getenv('CT_REGISTER_MODE') and os.getenv(
-#        'CT_REGISTER_MODE') == 'auto' else CTRegisterMicroserviceFlask.NORMAL_MODE,
-#    ct_url=os.getenv('CT_URL'),
-#    url=os.getenv('LOCAL_URL')
-#)
-#@app.before_first_request
 #def setup_gcAccess():
-#    """Sets up Earth Engine authentication."""
+#    """Sets up GCS authentication."""
 #    gae_credentials = app_engine.Credentials()
 #    client = storage.Client(credentials=gae_credentials)
 #    config.CATALOG_BUCKET = client.get_bucket("earthengine-catalog")
@@ -98,10 +73,11 @@ def setup_ee():
 setup_ee()
 
 ################################################################################
-# Route handlers for entry points
+# Routes handle with Blueprint is allways a good idea
 ################################################################################
+geoPredictor = Blueprint('geoPredictor', __name__)
 
-@app.route('/model',  strict_slashes=False, methods=['GET'])
+@geoPredictor.route('/model',  strict_slashes=False, methods=['GET'])
 def get_models():
     # Receive a payload and post it to mongo
     try:
@@ -122,23 +98,51 @@ def get_models():
     except Exception as err:
             return error(status=502, detail=f'{err}')
 
-@app.route('/model/<model_name>',  strict_slashes=False, methods=['GET', 'POST'])
+@geoPredictor.route('/model/<model_name>',  strict_slashes=False, methods=['GET', 'POST'])
 @sanitize_parameters
 @validate_prediction_params
-#@get_geo_by_hash
+@get_geo_by_hash
 def get_prediction(**kwargs):
     #app.logger.info(f"id: {model_id}")
     #function to get prediction from the selected model and region
     app.logger.info(f'[GET, POSTS]: Recieved {kwargs}')
-    tests = predict(**kwargs)
-    #result = mongo_collection.find_one({"_id": ObjectId(schema_id)})
-    #app.logger.debug(result)
-    #del result["_id"]
+    #Set up the loop; we need to set it up here and not in the service because is not thread safe.
+    loop = asyncio.new_event_loop()
+    # activate this if you need to debug async loop
+    #loop.set_debug(True)
+    tests = predict(loop, **kwargs)
+    loop.close()
     return jsonify({
         'data': tests
     }), 200
 
+# Routing Errors & CT
 # Routing
+app.register_blueprint(geoPredictor, url_prefix='/api/v1/geopredictor')
+
+# CT Registering
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(PROJECT_DIR)
+#
+#
+def load_config_json(name):
+    json_path = os.path.abspath(os.path.join(BASE_DIR, 'api/microservice')) + '/' + name + '.json'
+    with open(json_path) as data_file:
+        info = json.load(data_file)
+    return info
+#
+info = load_config_json('register')
+swagger = load_config_json('swagger')
+CTRegisterMicroserviceFlask.register(
+    app=app,
+    name='geoPredictor',
+    info=info,
+    swagger=swagger,
+    mode=CTRegisterMicroserviceFlask.AUTOREGISTER_MODE if os.getenv('CT_REGISTER_MODE') and os.getenv(
+        'CT_REGISTER_MODE') == 'auto' else CTRegisterMicroserviceFlask.NORMAL_MODE,
+    ct_url=os.getenv('CT_URL'),
+    url=os.getenv('LOCAL_URL')
+)
 
 @app.errorhandler(403)
 def forbidden(e):
@@ -163,41 +167,4 @@ def gone(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return error(status=500, detail='Internal Server Error')
-#@app.route('/model/<model_id>',  strict_slashes=False, methods=['GET', 'POST'])
-#def get_prediction(model_id):
-#    app.logger.info(f"id: {model_id}")
-#    #function to get prediction from the selected model and region
-#    logging.info(f'[GET, POSTS]: Recieved {model_id}')
-#
-#    result = mongo_collection.find_one({"_id": ObjectId(schema_id)})
-#    app.logger.debug(result)
-#    del result["_id"]
-#    return jsonify({
-#        'data': result
-#    })
-#
-#
-#@app.route('/model/<model_id>/<band>/<z>/<x>/<y>',  strict_slashes=False, methods=['GET'])
-#def validate(schema_id):
-#    app.logger.info(f"id: {schema_id}")
-#    #function to get schema id from mongo
-#    logging.info(f'[GET]: Recieved {schema_id}'),
-#    schema = mongo_collection.find_one({"_id": ObjectId(schema_id)})
-#
-#    payload = request.json
-#
-#    app.logger.debug(schema)
-#    app.logger.debug(payload)
-#    
-#    del schema["_id"]
-#
-#    try:
-#        validation = jsonschema.validate(payload, schema)
-#    except Exception as e:
-#        output = str(e)
-#        
-#    if output is None:
-#        output = "OK"
-#    return jsonify({
-#        'data': output
-#    })
+
