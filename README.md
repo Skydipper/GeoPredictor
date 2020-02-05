@@ -14,6 +14,8 @@ You will need to have installed [docker](https://docs.docker.com/install/) and [
 
 You will  need to have [control tower](https://github.com/Skydipper/control-tower/tree/skydipper) and [geostore](https://github.com/Skydipper/Geostore) up and running.
 
+Don't forget to populate your `.env` file with the requirements
+
 run `sh geopredictor.sh develop` 
 
 After pgadmin is up and running you can `http://0.0.0.0:16543/` to load into pg-admin.
@@ -26,3 +28,9 @@ You will need to connect to the postgres container. To do so:
 `docker exec -it geo-postgres-compose /bin/bash`
 `cd /data_import`
 `sh import_data.sh`
+
+## Tests
+TODO
+
+## Deployment
+TODO
