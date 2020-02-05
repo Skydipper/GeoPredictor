@@ -54,7 +54,7 @@ CREATE TABLE model_versions (
 CREATE TABLE image (  
 	id INT PRIMARY KEY,
 	dataset_id INT,
-	band_selections TEXT,
+	bands_selections TEXT,
 	scale FLOAT,
 	init_date DATE,
 	end_date DATE,
@@ -86,14 +86,15 @@ done
 # alter datatypes for tables image and dataset to convert band data from text onto an array
 echo "\033[92mSUCCESS:\033[0m  Formatting arrays..."
 psql -U ${THE_USER} ${THE_DB}<<OMG
+
 ALTER TABLE image
-ALTER COLUMN band_selections TYPE jsonb USING to_jsonb(band_selections);
+ALTER COLUMN bands_selections TYPE jsonb USING array_to_json(string_to_array(btrim(replace(replace(btrim(bands_selections::TEXT,'"'''''''),'''''',''),'"',''),'[]'), ','));
 
 ALTER TABLE dataset
-ALTER COLUMN bands TYPE jsonb USING to_jsonb(bands);
+ALTER COLUMN bands TYPE jsonb USING array_to_json(string_to_array(btrim(replace(replace(btrim(bands::TEXT,'"'''''''),'''''',''),'"',''),'[]'), ','));
 
 ALTER TABLE dataset
-ALTER COLUMN rgb_bands TYPE jsonb USING to_jsonb(rgb_bands);
+ALTER COLUMN rgb_bands TYPE jsonb USING array_to_json(string_to_array(btrim(replace(replace(btrim(rgb_bands::TEXT,'"'''''''),'''''',''),'"',''),'[]'), ','));
 OMG
 
 echo "\033[92mSUCCESS:\033[0m  Tables import ready"

@@ -27,8 +27,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def setup_logLevels(level="DEBUG"):
-    """Sets up Earth Engine authentication."""
-    logging.basicConfig(level=level)
+    """Sets up logs level."""
     formatter = logging.Formatter('%(asctime)s %(levelname)s:%(name)s:%(funcName)s - %(lineno)d:  %(message)s',
                               '%Y%m%d-%H:%M%p')
 

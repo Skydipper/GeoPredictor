@@ -112,24 +112,26 @@ def predict(loop, **kwargs):
 			"""
 		iImageData, oImageData = db.Query(query_2)
 		
-		logging.debug(f'[INPUT]: {iImageData}')
-		logging.debug(f'[OUTPUT]: {oImageData}')
+		logging.debug(f'[INPUT composite]: {iImageData}')
+		logging.debug(f'[OUTPUT composite]: {oImageData}')
 		
 		
 		
 		# Create composite
 		# TODO: 
 		# * right now the composite specifics are on a separate file, `ee_collection_specifics` this is does not scale at all, we should add this information to the DB  to image and dataset info
-		# * asyncronously fetch mapids, as generating the info might take some time
 
 		image = ee_collection_specifics.Composite(iImageData['slug'])(kwargs['sanitized_params']['init_date'], kwargs['sanitized_params']['end_date'])
 		
 		# Normalize Input image composite
-		if bool(iImageData['bands_min_max']): 
-			image = normalize_ee_images(image, iImageData["slug"], json.loads(iImageData["bands_min_max"]))
-		image = image.select(json.loads(modelData[0]["training_params"])["in_bands"]).float()
+		logging.debug(f"[Normalize]: {iImageData['bands_min_max']}")
+		if iImageData['bands_min_max']: 
+			
+			image = normalize_ee_images(image, iImageData["slug"], iImageData["bands_min_max"])
+			logging.debug(f'[bmax]:')
+		image = image.select(modelData[0]["training_params"]["in_bands"]).float()
+		logging.debug(f'[Normalizes]:')
 
-		logging.debug(f'[image]: {image.getInfo()}')
 		
 		# Predicted image composite
 		
@@ -162,7 +164,7 @@ def predict(loop, **kwargs):
 			}                  
 			}
 		)
-		predictions = model.predictImage(image.toArray()).arrayFlatten([json.loads(modelData[0]["training_params"])["out_bands"]])
+		predictions = model.predictImage(image.toArray()).arrayFlatten([modelData[0]["training_params"]["out_bands"]])
 
 		logging.debug(f'[predictions]: {predictions.getInfo()}')
 		# Get the Geometry information
@@ -179,7 +181,7 @@ def predict(loop, **kwargs):
 			predictions = predictions.addBands(maxValues)
 
 			expression = ""
-			for n, band in enumerate(json.loads(modelData[0]["training_params"])["out_bands"]):
+			for n, band in enumerate(modelData[0]["training_params"]["out_bands"]):
 				expression = expression + f"(b('{band}') == b('max')) ? {str(n+1)} : "
 
 			expression = expression + f"0"
@@ -200,9 +202,9 @@ def predict(loop, **kwargs):
 		
 		oMapids = []
 		if  modelData[0]["model_type"] == 'segmentation':
-			oParams =[{'bands': ['categories'], 'min': 1, 'max': len(json.loads(modelData[0]["training_params"])["out_bands"])}]
+			oParams =[{'bands': ['categories'], 'min': 1, 'max': len(modelData[0]["training_params"]["out_bands"])}]
 		else:
-			oParams =[{'bands': [band], 'min': 0, 'max': 1} for band in json.loads(modelData[0]["training_params"])["out_bands"]]
+			oParams =[{'bands': [band], 'min': 0, 'max': 1} for band in modelData[0]["training_params"]["out_bands"]]
 		
 		
 		asyncio.set_event_loop(loop)
