@@ -30,6 +30,7 @@ CREATE TABLE model (
 	id INT PRIMARY KEY,
 	model_name TEXT,
 	model_type TEXT,
+	model_output TEXT,
 	model_description TEXT,
 	output_image_id INT
 		
@@ -41,6 +42,7 @@ CREATE TABLE model_versions (
 	input_image_id INT,
 	output_image_id INT,
 	geostore_id TEXT,
+	kernel_size INT,
 	sample_size INT,
 	training_params JSONB,
 	version BIGINT,
@@ -56,7 +58,8 @@ CREATE TABLE image (
 	scale FLOAT,
 	init_date DATE,
 	end_date DATE,
-	bands_min_max JSONB
+	bands_min_max JSONB,
+	norm_type TEXT
 );
 CREATE TABLE dataset (
 	id INT PRIMARY KEY,
