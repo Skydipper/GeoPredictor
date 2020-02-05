@@ -82,7 +82,7 @@ def predict(loop, **kwargs):
 
 		logging.debug('launching query...')
 		query = f"""
-		SELECT model.model_name, model_type, model_description,model_versions.input_image_id,model_versions.output_image_id, model_versions.version as version, model_versions.model_architecture, model_versions.training_params 
+		SELECT model.model_name, model_type, model_output, model_description, model_versions.input_image_id,model_versions.output_image_id, model_versions.kernel_size, model_versions.version as version, model_versions.model_architecture, model_versions.training_params 
 		FROM model 
 		INNER JOIN model_versions ON model.id=model_versions.model_id
 		WHERE deployed is true 
@@ -105,7 +105,7 @@ def predict(loop, **kwargs):
 		# TODO: right now we are not really separating which is the input and witch is the output, we should 
 		
 		query_2 = f"""
-		SELECT  dataset.slug, dataset.name, dataset.bands, dataset.rgb_bands, dataset.provider, image.band_selections, image.scale, image.bands_min_max
+		SELECT  dataset.slug, dataset.name, dataset.bands, dataset.rgb_bands, dataset.provider, image.bands_selections, image.scale, image.bands_min_max
 		FROM image 
 		INNER JOIN dataset ON image.dataset_id=dataset.id
 		WHERE image.id in ({modelData[0]["input_image_id"]}, {modelData[0]["output_image_id"]})
@@ -126,21 +126,34 @@ def predict(loop, **kwargs):
 		
 		# Normalize Input image composite
 		if bool(iImageData['bands_min_max']): 
-			image = normalize_ee_images(image, iImageData['slug'], iImageData['bands_min_max'])
-		image = image.select(modelData[0]["training_params"]["in_bands"]).float()
-		
+			image = normalize_ee_images(image, iImageData["slug"], json.loads(iImageData["bands_min_max"]))
+		image = image.select(json.loads(modelData[0]["training_params"])["in_bands"]).float()
+
+		logging.debug(f'[image]: {image.getInfo()}')
 		
 		# Predicted image composite
 		
 		# Load the trained model and use it for prediction.
+		model_name = str(modelData[0]["model_name"])
+		logging.debug(f"[MODEL NAME]: {model_name}")
 		version_name = 'v'+ str(modelData[0]["version"])
 		logging.debug(f"[INPUT- VERSION]: {version_name}")
+		kernel_size = int(modelData[0]["kernel_size"])
+		logging.debug(f"[KERNEL SIZE]: {kernel_size}")
+
+		if kernel_size == 1:
+		    input_tile_size = [1, 1]
+		    input_overlap_size = [0, 0]
+		if kernel_size >1 :
+		    input_tile_size = [144, 144]
+		    input_overlap_size = [8, 8]
+
 		model = ee.Model.fromAiPlatformPredictor(
 			projectName = os.getenv('project_id'),
-			modelName = modelData[0]["model_name"],
+			modelName = model_name,
 			version = version_name,
-			inputTileSize = [144, 144],
-			inputOverlapSize = [8, 8],
+			inputTileSize = input_tile_size,
+			inputOverlapSize = input_overlap_size,
 			proj = ee.Projection('EPSG:4326').atScale(iImageData["scale"]),
 			fixInputProj = True,
 			outputBands = {'prediction': {
@@ -149,8 +162,9 @@ def predict(loop, **kwargs):
 			}                  
 			}
 		)
-		predictions = model.predictImage(image.toArray()).arrayFlatten([modelData[0]["training_params"]["out_bands"]])
+		predictions = model.predictImage(image.toArray()).arrayFlatten([json.loads(modelData[0]["training_params"])["out_bands"]])
 
+		logging.debug(f'[predictions]: {predictions.getInfo()}')
 		# Get the Geometry information
 		
 		#logging.debug(f"[MY GEOM]{geometry}")
@@ -159,13 +173,13 @@ def predict(loop, **kwargs):
 		# Clip the prediction area with the polygon
 		predictions = predictions.clip(polygon)
 
-		if modelData[0]["model_type"] == 'segmentation':
+		if modelData[0]["model_output"] == 'segmentation':
 			maxValues = predictions.reduce(ee.Reducer.max())
 
 			predictions = predictions.addBands(maxValues)
 
 			expression = ""
-			for n, band in enumerate(modelData[0]["training_params"]["out_bands"]):
+			for n, band in enumerate(json.loads(modelData[0]["training_params"])["out_bands"]):
 				expression = expression + f"(b('{band}') == b('max')) ? {str(n+1)} : "
 
 			expression = expression + f"0"
@@ -186,9 +200,9 @@ def predict(loop, **kwargs):
 		
 		oMapids = []
 		if  modelData[0]["model_type"] == 'segmentation':
-			oParams =[{'bands': ['categories'], 'min': 1, 'max': len(modelData[0]["training_params"]["out_bands"])}]
+			oParams =[{'bands': ['categories'], 'min': 1, 'max': len(json.loads(modelData[0]["training_params"])["out_bands"])}]
 		else:
-			oParams =[{'bands': [band], 'min': 0, 'max': 1} for band in modelData[0]["training_params"]["out_bands"]]
+			oParams =[{'bands': [band], 'min': 0, 'max': 1} for band in json.loads(modelData[0]["training_params"])["out_bands"]]
 		
 		
 		asyncio.set_event_loop(loop)
