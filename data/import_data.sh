@@ -78,7 +78,7 @@ for NAME in ${TABLES}; do
 	echo "TABLE: \033[94m ${NAME}\033[0m"
 	psql -U ${THE_USER} -h ${POSTGRESQL_HOST} ${THE_DB} <<OMG
     DELETE FROM ${NAME}; 
-    COPY ${NAME} FROM '${THE_DIR}${NAME}.csv' quote '^' delimiter ';' CSV header;
+    \COPY ${NAME} FROM ${NAME}.csv quote '^' delimiter ';' CSV header
 OMG
 done
 
