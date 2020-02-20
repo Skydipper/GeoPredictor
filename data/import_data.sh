@@ -1,9 +1,9 @@
 #!/bin/sh
 
-THE_USER=postgres
-THE_DB=geomodels
-PSQL=/opt/postgresql/bin/psql
-THE_DIR=/data_import/
+THE_USER=geopredictor
+THE_DB=geopredictor
+POSTGRESQL_HOST=localhost
+PSQL=/usr/bin/psql
 TABLES="model model_versions image dataset"
 
 
