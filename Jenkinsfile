@@ -47,7 +47,7 @@ node {
       switch ("${env.BRANCH_NAME}") {
 
         // Roll out to production
-        case "master":
+        case "develop":
             sh("echo Deploying to PROD cluster")
             sh("kubectl config use-context gke_${GCLOUD_PROJECT}_${GCLOUD_GCE_ZONE}_${KUBE_PROD_CLUSTER}")
             def service = sh([returnStdout: true, script: "kubectl get deploy ${appName} || echo NotFound"]).trim()
