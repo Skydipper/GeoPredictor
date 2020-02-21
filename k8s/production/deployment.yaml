@@ -56,7 +56,7 @@ spec:
                 secretKeyRef:
                   name: mssecrets
                   key: API_VERSION
-          - name: POSTGRESQL_CONNECTION
+          - name: POSTGRES_CONNECTION
             valueFrom:
                 secretKeyRef:
                   name: dbsecrets
