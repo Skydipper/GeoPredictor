@@ -58,7 +58,8 @@ CREATE TABLE image (
 	init_date DATE,
 	end_date DATE,
 	bands_min_max JSONB,
-	norm_type TEXT
+	norm_type TEXT,
+	geostore_id TEXT
 );
 CREATE TABLE dataset (
 	id INT PRIMARY KEY,
