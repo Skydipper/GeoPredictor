@@ -61,6 +61,7 @@ def setup_ee():
     """Sets up Earth Engine authentication."""
     try:
         private_key = os.getenv('EE_PRIVATE_KEY')
+        service_email = os.getenv('GEO_PREDICTOR_SERVICE_EMAIL')
         credentials = ee.ServiceAccountCredentials(email=None, key_data=private_key)
         ee.Initialize(credentials=credentials, use_cloud_api=False)
         ee.data.setDeadline(60000)

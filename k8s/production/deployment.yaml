@@ -56,6 +56,11 @@ spec:
                 secretKeyRef:
                   name: mssecrets
                   key: API_VERSION
+          - name: GEO_PREDICTOR_SERVICE_EMAIL
+            valueFrom:
+              secretKeyRef:
+                name: mssecrets
+                key: GEO_PREDICTOR_SERVICE_EMAIL
           - name: EE_PRIVATE_KEY
             valueFrom:
               secretKeyRef:
