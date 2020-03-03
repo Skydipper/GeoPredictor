@@ -62,7 +62,7 @@ def setup_ee():
     try:
         private_key = os.getenv('EE_PRIVATE_KEY')
         service_email = os.getenv('GEO_PREDICTOR_SERVICE_EMAIL')
-        credentials = ee.ServiceAccountCredentials(email=None, key_data=private_key)
+        credentials = ee.ServiceAccountCredentials(email=service_email, key_data=private_key)
         ee.Initialize(credentials=credentials, use_cloud_api=False)
         ee.data.setDeadline(60000)
         app.logger.info("EE Initialized")
