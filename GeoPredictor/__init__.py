@@ -115,11 +115,12 @@ def get_prediction(**kwargs):
         'data': tests
     }), 200
 
-# Routing Errors & CT
 # Routing
 app.register_blueprint(geoPredictor, url_prefix='/api/v1/geopredictor')
 
+################################################################################
 # CT Registering
+################################################################################
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 #
@@ -142,6 +143,10 @@ CTRegisterMicroserviceFlask.register(
     ct_url=os.getenv('CT_URL'),
     url=os.getenv('LOCAL_URL')
 )
+
+################################################################################
+# Error handler
+################################################################################
 
 @app.errorhandler(403)
 def forbidden(e):
