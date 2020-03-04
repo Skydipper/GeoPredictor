@@ -2,6 +2,14 @@
 	"name": "GeoPredictor",
 	"endpoints": [
 		{
+			"path": "/v1/geopredictor/dataset",
+			"method": "GET",
+			"redirect": {
+				"method": "GET",
+				"path": "/api/v1/geopredictor/dataset"
+			}
+		},
+		{
 			"path": "/v1/geopredictor/model",
 			"method": "GET",
 			"redirect": {

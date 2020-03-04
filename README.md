@@ -28,7 +28,7 @@ You will need to connect to the postgres container. To do so:
 `docker exec -it geo-postgres-compose /bin/bash`
 `cd /data_import`
 `sh import_data.sh`
-
+To export the DB: `pg_dump -U postgres geopredictor > geopredictor.pgsql`
 ## Tests
 TODO
 
