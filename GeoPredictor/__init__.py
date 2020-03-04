@@ -28,7 +28,7 @@ class bcolors:
 
 def setup_logLevels(level="DEBUG"):
     """Sets up logs level."""
-    formatter = logging.Formatter('%(asctime)s %(levelname)s:%(name)s:%(funcName)s - %(lineno)d:  %(message)s',
+    formatter = logging.Formatter('%(asctime)s \033[1m%(levelname)s\033[0m:%(name)s:\033[1m%(funcName)s\033[0m - %(lineno)d:  %(message)s',
                               '%Y%m%d-%H:%M%p')
 
     root = logging.getLogger()
@@ -79,15 +79,34 @@ geoPredictor = Blueprint('geoPredictor', __name__)
 
 @geoPredictor.route('/model',  strict_slashes=False, methods=['GET'])
 def get_models():
-    # Receive a payload and post it to mongo
+    # Receive a payload and post it to DB to get all models. No pagination or filtering capabilities applied yet
     try:
         db = Database()
         query = """
-        SELECT model.model_name, model_type, model_output, model_description, model_versions.version as version, model_versions.model_architecture 
+        SELECT model.model_name, model_type, model_output, model_description, model_versions.version as version, model_versions.model_architecture, model_versions.training_params->>'tb_url' as tb_url
         FROM model 
         INNER JOIN model_versions ON model.id=model_versions.model_id
         WHERE deployed is true
         ORDER BY model_name ASC, version ASC 
+        """
+        result = db.Query(query)
+        app.logger.debug(result)
+        # function to post schema
+        return jsonify(
+            {'data': result}
+        ), 200
+    except Exception as err:
+            return error(status=502, detail=f'{err}')
+
+@geoPredictor.route('/dataset',  strict_slashes=False, methods=['GET'])
+def get_datasets():
+    # Receive a payload and post it to DB to get all models. No pagination or filtering capabilities applied yet
+    try:
+        db = Database()
+        query = """
+        SELECT  dataset.slug, dataset.name, dataset.bands, dataset.rgb_bands, dataset.provider, image.bands_selections, image.scale, image.bands_min_max
+		FROM image 
+		INNER JOIN dataset ON image.dataset_id=dataset.id 
         """
         result = db.Query(query)
         app.logger.debug(result)
@@ -116,11 +135,12 @@ def get_prediction(**kwargs):
         'data': tests
     }), 200
 
-# Routing Errors & CT
 # Routing
 app.register_blueprint(geoPredictor, url_prefix='/api/v1/geopredictor')
 
+################################################################################
 # CT Registering
+################################################################################
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 #
@@ -143,6 +163,10 @@ CTRegisterMicroserviceFlask.register(
     ct_url=os.getenv('CT_URL'),
     url=os.getenv('LOCAL_URL')
 )
+
+################################################################################
+# Error handler
+################################################################################
 
 @app.errorhandler(403)
 def forbidden(e):
