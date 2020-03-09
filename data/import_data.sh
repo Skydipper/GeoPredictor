@@ -18,7 +18,7 @@ else
 OMG
 
 fi
-
+# this if does not work. 
 if psql -U ${THE_BOSS} -h ${POSTGRESQL_HOST} -lqt | cut -d \| -f 1 | grep -qw ${THE_USER}
 then
     # database exists
