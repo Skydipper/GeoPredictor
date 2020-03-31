@@ -169,13 +169,14 @@ def predict(loop, **kwargs):
 		logging.debug(f'[predictions]: {predictions.getInfo()}')
 		# Get the Geometry information
 		
-		#logging.debug(f"[MY GEOM]{geometry}")
-		polygon = ee.Geometry.Polygon(json.loads(geometry).get('features')[0].get('geometry').get('coordinates'))
-		
+		logging.debug(f"[MY GEOM]{geometry}")
+		polygon = ee.Geometry.Polygon(json.loads(geometry).get('geometry').get('coordinates'))
+		logging.debug(f"[segmentation] leleeeee")
 		# Clip the prediction area with the polygon
 		predictions = predictions.clip(polygon)
-
+		logging.debug(f"[segmentation] kekeke")
 		if modelData[0]["model_output"] == 'segmentation':
+			logging.debug(f"[segmentation] Init")
 			maxValues = predictions.reduce(ee.Reducer.max())
 
 			predictions = predictions.addBands(maxValues)
@@ -194,7 +195,7 @@ def predict(loop, **kwargs):
 		logging.debug(f"[ASYNC] Init")
 		
 
-		#logging.debug(f"[INPUT- rgbBands]: {iImageData['rgb_bands']}")
+		logging.debug(f"[INPUT- rgbBands]: {iImageData['rgb_bands']}")
 		
 		iMapids = []
 		iParams =[{'bands': ['B4', 'B3', 'B2'], 'min': 0, 'max': 1}]

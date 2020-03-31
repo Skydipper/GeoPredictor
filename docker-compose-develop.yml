@@ -1,17 +1,30 @@
 version: '3'
 services:
+  # geo-postgres-compose:
+  #   container_name: 'geo-postgres-compose'
+  #   image: geographica/postgis:dev_diplodocus
+  #   environment:
+  #     - POSTGRES_PASSWD=postgres
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - ${LOCAL_DATABASE}:/data
+  #     - ./data:/data_import 
+  #   networks:
+  #     - geo-postgres-compose-network
+  # THIS IS THE CONNEXION WITH GOOGLE SQL INSTANCE
   geo-postgres-compose:
-    container_name: 'geo-postgres-compose'
-    image: geographica/postgis:dev_diplodocus
-    environment:
-      - POSTGRES_PASSWD=postgres
-    ports:
-      - "5432:5432"
+    container_name: "geo-postgres-compose"
+    image: gcr.io/cloudsql-docker/gce-proxy:1.16
+    # Port: MySQL (3306), PostgreSQL (5433)
+    command: /cloud_sql_proxy -instances=skydipper-196010:europe-west1:skydipper-pg-1=tcp:0.0.0.0:5433 -credential_file=/config
     volumes:
-      - ${LOCAL_DATABASE}:/data
-      - ./data:/data_import 
+      - ./sqlPrivateKey.json:/config
+    ports:
+      - "5434:5433"
     networks:
       - geo-postgres-compose-network
+    restart: always
   
   geo-pgadmin-compose:
     container_name: 'geo-pgadmin-compose'
@@ -28,11 +41,11 @@ services:
     networks:
       - geo-postgres-compose-network
 
-  geopredictor:
-    container_name: 'geopredictor'
+  geopredictor_service:
+    container_name: 'geopredictor_service'
     build: .
     ports:
-      - "6868:6868"
+      - "6767:6767"
     command: develop
     volumes:
       - ./GeoPredictor:/api/GeoPredictor
@@ -45,7 +58,7 @@ services:
     env_file:
       - .env
     environment:
-      PORT: 6868
+      PORT: 6767
       HOST: "0.0.0.0"
       database: test
       CT_REGISTER_MODE: auto
