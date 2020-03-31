@@ -151,7 +151,7 @@ def predict(loop, **kwargs):
 		    input_overlap_size = [8, 8]
 
 		model = ee.Model.fromAiPlatformPredictor(
-			projectName = os.getenv('project_id'),
+			projectName = os.getenv('EE_PRIVATE_KEY')['project_id'],
 			modelName = model_name,
 			version = version_name,
 			inputTileSize = input_tile_size,
