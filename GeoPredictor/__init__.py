@@ -48,14 +48,16 @@ def setup_logLevels(level="DEBUG"):
 
 setup_logLevels()
 
-# Initialization of Flask application.
-app = Flask(__name__)   
+app = Flask(__name__)
+
+# Initialization of Flask application.   
 
 #def setup_gcAccess():
 #    """Sets up GCS authentication."""
 #    gae_credentials = app_engine.Credentials()
 #    client = storage.Client(credentials=gae_credentials)
 #    config.CATALOG_BUCKET = client.get_bucket("earthengine-catalog")
+# Initializing GEE
 
 def setup_ee():
     """Sets up Earth Engine authentication."""
@@ -63,13 +65,12 @@ def setup_ee():
         private_key = os.getenv('EE_PRIVATE_KEY')
         service_email = os.getenv('GEO_PREDICTOR_SERVICE_EMAIL')
         credentials = ee.ServiceAccountCredentials(email=service_email, key_data=private_key)
-        ee.Initialize(credentials=credentials, use_cloud_api=False)
+        ee.Initialize(credentials=credentials)
         ee.data.setDeadline(60000)
         app.logger.info("EE Initialized")
     except Exception as err:
+            logging.error(f'{err}')
             return error(status=502, detail=f'{err}')
-
-
 setup_ee()
 
 ################################################################################

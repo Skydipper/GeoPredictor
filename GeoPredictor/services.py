@@ -78,7 +78,7 @@ def predict(loop, **kwargs):
 		# --- PARAMS 
 		db = Database()
 		geometry = kwargs['sanitized_params']['geojson']
-		EE_TILES = 'https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}'
+		EE_TILES = '{tile_fetcher.url_format}'
 
 		logging.debug('launching query...')
 		query = f"""
@@ -147,7 +147,7 @@ def predict(loop, **kwargs):
 		    input_tile_size = [1, 1]
 		    input_overlap_size = [0, 0]
 		if kernel_size >1 :
-		    input_tile_size = [144, 144]
+		    input_tile_size = [56, 56]
 		    input_overlap_size = [8, 8]
 
 		model = ee.Model.fromAiPlatformPredictor(
@@ -214,6 +214,10 @@ def predict(loop, **kwargs):
 		# Fulfill promises
 		logging.debug(f"'[ASYNC] looping through functios .'")
 		oMapids = loop.run_until_complete(asyncio.gather(*tasks))
+
+		
+		logging.debug(f'[Loop resolved]: {str(oMapids)}')
+		logging.debug(f'[Loop resolved]: {str(oMapids[0])}')
 		
 		result = {
 			'centroid': polygon.centroid().getInfo().get('coordinates')[::-1],
