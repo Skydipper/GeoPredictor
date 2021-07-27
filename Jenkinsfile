@@ -2,20 +2,6 @@
 
 node {
 
-  // Actions
-  def forceCompleteDeploy = false
-  try {
-    timeout(time: 15, unit: 'SECONDS') {
-      forceCompleteDeploy = input(
-        id: 'Proceed0', message: 'Force COMPLETE Deployment', parameters: [
-        [$class: 'BooleanParameterDefinition', defaultValue: true, description: '', name: 'Please confirm you want to recreate services and deployments']
-      ])
-    }
-  }
-  catch(err) { // timeout reached or input false
-      // nothing
-  }
-
   // Variables
   def tokens = "${env.JOB_NAME}".tokenize('/')
   def appName = tokens[0]
@@ -51,12 +37,8 @@ node {
             sh("echo Deploying to PROD cluster")
             sh("kubectl config use-context gke_${GCLOUD_PROJECT}_${GCLOUD_GCE_ZONE}_${KUBE_PROD_CLUSTER}")
             def service = sh([returnStdout: true, script: "kubectl get deploy ${appName} || echo NotFound"]).trim()
-            if ((service && service.indexOf("NotFound") > -1) || (forceCompleteDeploy)){
-              sh("sed -i -e 's/{name}/${appName}/g' k8s/services/*.yaml")
-              sh("sed -i -e 's/{name}/${appName}/g' k8s/production/*.yaml")
-              sh("kubectl apply -f k8s/services/")
-              sh("kubectl apply -f k8s/production/")
-            }
+            sh("kubectl apply -f k8s/services/")
+            sh("kubectl apply -f k8s/production/")
             sh("kubectl set image deployment ${appName} ${appName}=${imageTag} --record")
           break
 

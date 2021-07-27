@@ -1,92 +1,93 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: default
   labels:
-    name: {name}
     app: validator
-  name: {name}
+    name: geopredictor
+  name: geopredictor
+  namespace: default
 spec:
+  progressDeadlineSeconds: 2147483647
+  replicas: 1
   revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      name: geopredictor
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        name: {name}
+        name: geopredictor
     spec:
-      tolerations:
-      - key: "type"
-        operator: "Equal"
-        value: "validator"
-        effect: "NoSchedule"
       containers:
-      - name: {name}
-        image: vizzuality/{name}
-        imagePullPolicy: Always
-        resources:
-          requests:
-            memory: "128Mi"
-          limits:
-            memory: "512Mi"
-        args:
-          - start
-        env:
-          - name: PORT
-            value: "4506"
-          - name: ENVIRONMENT
-            value: prod
-          - name: LOCAL_URL
-            value: http://{name}.default.svc.cluster.local:4506
-          - name: CT_URL
-            valueFrom:
+        - args:
+            - start
+          env:
+            - name: PORT
+              value: "4506"
+            - name: ENVIRONMENT
+              value: prod
+            - name: LOCAL_URL
+              value: http://geopredictor.default.svc.cluster.local:4506
+            - name: CT_URL
+              valueFrom:
                 secretKeyRef:
-                  name: mssecrets
                   key: CT_URL
-          - name: CT_TOKEN
-            valueFrom:
-                secretKeyRef:
                   name: mssecrets
+            - name: CT_TOKEN
+              valueFrom:
+                secretKeyRef:
                   key: CT_TOKEN
-          - name: CT_REGISTER_MODE
-            valueFrom:
-                secretKeyRef:
                   name: mssecrets
+            - name: CT_REGISTER_MODE
+              valueFrom:
+                secretKeyRef:
                   key: CT_REGISTER_MODE
-          - name: API_VERSION
-            valueFrom:
-                secretKeyRef:
                   name: mssecrets
-                  key: API_VERSION
-          - name: GEO_PREDICTOR_SERVICE_EMAIL
-            valueFrom:
-              secretKeyRef:
-                name: mssecrets
-                key: GEO_PREDICTOR_SERVICE_EMAIL
-          - name: EE_PRIVATE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: mssecrets
-                key: EE_GEE_TILE_PRIVATE_KEY
-          - name: POSTGRES_CONNECTION
-            valueFrom:
+            - name: API_VERSION
+              valueFrom:
                 secretKeyRef:
-                  name: dbsecrets
+                  key: API_VERSION
+                  name: mssecrets
+            - name: GEO_PREDICTOR_SERVICE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  key: GEO_PREDICTOR_SERVICE_EMAIL
+                  name: mssecrets
+            - name: EE_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: EE_GEE_TILE_PRIVATE_KEY
+                  name: mssecrets
+            - name: POSTGRES_CONNECTION
+              valueFrom:
+                secretKeyRef:
                   key: GEOPREDICTOR_POSTGRESQL_URI
-        ports:
-          - containerPort: 4506
-      - name: cloudsql-proxy
-        image: gcr.io/cloudsql-docker/gce-proxy:1.14
-        command: ["/cloud_sql_proxy",
-                  "-instances=skydipper-196010:europe-west1:skydipper-pg-1=tcp:5432",
-                  "-credential_file=/secrets/cloudsql/credentials.json"]
-        securityContext:
-          runAsUser: 2  # non-root user
-          allowPrivilegeEscalation: false
-        volumeMounts:
-          - name: cloudsql-instance-credentials
-            mountPath: /secrets/cloudsql
-            readOnly: true
-      volumes:
-        - name: cloudsql-instance-credentials
-          secret:
-            secretName: cloudsql-instance-credentials
+                  name: dbsecrets
+          image: skydipper/geopredictor:develop.24
+          imagePullPolicy: Always
+          name: geopredictor
+          ports:
+            - containerPort: 4506
+              protocol: TCP
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
       restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: { }
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - effect: NoSchedule
+          key: type
+          operator: Equal
+          value: validator
