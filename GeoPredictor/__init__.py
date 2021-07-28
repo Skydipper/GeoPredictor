@@ -11,6 +11,7 @@ from GeoPredictor.services import Database, predict
 from GeoPredictor.middleware import parse_payload, sanitize_parameters, get_geo_by_hash
 from GeoPredictor.validators import validate_prediction_params
 from GeoPredictor.errors import error
+import base64
 
 
 #from bson.objectid import ObjectId
@@ -62,7 +63,7 @@ app = Flask(__name__)
 def setup_ee():
     """Sets up Earth Engine authentication."""
     try:
-        private_key = os.getenv('EE_PRIVATE_KEY')
+        private_key = base64.b64decode(os.getenv('EE_PRIVATE_KEY'))
         service_email = os.getenv('GEO_PREDICTOR_SERVICE_EMAIL')
         credentials = ee.ServiceAccountCredentials(email=service_email, key_data=private_key)
         ee.Initialize(credentials=credentials)
