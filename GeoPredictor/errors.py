@@ -9,6 +9,7 @@ def error(status=500, detail='generic error'):
     }
     return jsonify(errors=[error]), status
 
+
 class Error(Exception):
 
     def __init__(self, message='generic error'):
@@ -35,6 +36,7 @@ class DBError(Error):
 
 class GeostoreError(Error):
     pass
+
 
 class ModelError(Error):
     pass

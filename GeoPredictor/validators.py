@@ -1,7 +1,8 @@
-from flask import request
-from functools import wraps
 import logging
+from functools import wraps
+import json
 from cerberus import Validator
+
 from GeoPredictor.errors import error
 
 
@@ -19,6 +20,7 @@ to_bool = lambda v: v.lower() in ('true', '1')
 to_lower = lambda v: v.lower()
 # to_list = lambda v: json.loads(v.lower())
 to_list = lambda v: json.loads(v)
+
 
 def validate_prediction_params(func):
     """Water Risk atlas parameters validation"""
@@ -47,16 +49,16 @@ def validate_prediction_params(func):
                 'default': 'last',
                 'coerce': to_lower
             }
-            
+
         }
         try:
             logging.debug(f"[VALIDATOR - prediction params]: {kwargs}")
             validator = Validator(validation_schema, allow_unknown=True, purge_unknown=True)
             logging.info(f"[VALIDATOR - prediction params]: {validator.validate(kwargs['params'])}")
-            
+
             if not validator.validate(kwargs['params']):
                 return error(status=400, detail=validator.errors)
-            
+
             kwargs['sanitized_params'] = validator.normalized(kwargs['params'])
             return func(*args, **kwargs)
         except Exception as err:

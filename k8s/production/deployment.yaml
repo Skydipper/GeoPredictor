@@ -63,6 +63,11 @@ spec:
                 secretKeyRef:
                   key: EE_GEE_TILE_PRIVATE_KEY
                   name: mssecrets
+            - name: EE_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: EE_PROJECT_ID
+                  name: mssecrets
             - name: POSTGRES_CONNECTION
               valueFrom:
                 secretKeyRef:

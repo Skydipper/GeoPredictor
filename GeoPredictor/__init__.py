@@ -1,21 +1,20 @@
-from flask import Flask, request, jsonify, Blueprint
+import asyncio
+import base64
+import json
+import logging
 import os
 import sys
-import asyncio
+
 import CTRegisterMicroserviceFlask
-import logging
-#from google.auth import app_engine
 import ee
+from flask import Flask, jsonify, Blueprint
 
-from GeoPredictor.services import Database, predict
-from GeoPredictor.middleware import parse_payload, sanitize_parameters, get_geo_by_hash
-from GeoPredictor.validators import validate_prediction_params
 from GeoPredictor.errors import error
-import base64
+from GeoPredictor.errors import error
+from GeoPredictor.middleware import parse_payload, sanitize_parameters, get_geo_by_hash
+from GeoPredictor.services import Database, predict
+from GeoPredictor.validators import validate_prediction_params
 
-
-#from bson.objectid import ObjectId
-import json
 
 class bcolors:
     HEADER = '\033[95m'
@@ -27,10 +26,12 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def setup_logLevels(level="DEBUG"):
     """Sets up logs level."""
-    formatter = logging.Formatter('%(asctime)s \033[1m%(levelname)s\033[0m:%(name)s:\033[1m%(funcName)s\033[0m - %(lineno)d:  %(message)s',
-                              '%Y%m%d-%H:%M%p')
+    formatter = logging.Formatter(
+        '%(asctime)s \033[1m%(levelname)s\033[0m:%(name)s:\033[1m%(funcName)s\033[0m - %(lineno)d:  %(message)s',
+        '%Y%m%d-%H:%M%p')
 
     root = logging.getLogger()
     root.setLevel(level)
@@ -47,13 +48,15 @@ def setup_logLevels(level="DEBUG"):
     logging.getLogger('googleapiclient.discovery').setLevel(logging.ERROR)
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
 
+
 setup_logLevels()
 
 app = Flask(__name__)
 
-# Initialization of Flask application.   
 
-#def setup_gcAccess():
+# Initialization of Flask application.
+
+# def setup_gcAccess():
 #    """Sets up GCS authentication."""
 #    gae_credentials = app_engine.Credentials()
 #    client = storage.Client(credentials=gae_credentials)
@@ -63,23 +66,26 @@ app = Flask(__name__)
 def setup_ee():
     """Sets up Earth Engine authentication."""
     try:
-        private_key = os.getenv('EE_PRIVATE_KEY')
+        private_key = base64.b64decode(os.getenv('EE_PRIVATE_KEY'))
         service_email = os.getenv('GEO_PREDICTOR_SERVICE_EMAIL')
         credentials = ee.ServiceAccountCredentials(email=service_email, key_data=private_key)
         ee.Initialize(credentials=credentials)
         ee.data.setDeadline(60000)
         app.logger.info("EE Initialized")
     except Exception as err:
-            logging.error(f'{err}')
-            return error(status=502, detail=f'{err}')
+        logging.error(f'{err}')
+        return error(status=502, detail=f'{err}')
+
+
 setup_ee()
 
 ################################################################################
-# Routes handle with Blueprint is allways a good idea
+# Routes handle with Blueprint is always a good idea
 ################################################################################
 geoPredictor = Blueprint('geoPredictor', __name__)
 
-@geoPredictor.route('/model',  strict_slashes=False, methods=['GET'])
+
+@geoPredictor.route('/model', strict_slashes=False, methods=['GET'])
 def get_models():
     # Receive a payload and post it to DB to get all models. No pagination or filtering capabilities applied yet
     try:
@@ -98,9 +104,10 @@ def get_models():
             {'data': result}
         ), 200
     except Exception as err:
-            return error(status=502, detail=f'{err}')
+        return error(status=502, detail=f'{err}')
 
-@geoPredictor.route('/dataset',  strict_slashes=False, methods=['GET'])
+
+@geoPredictor.route('/dataset', strict_slashes=False, methods=['GET'])
 def get_datasets():
     # Receive a payload and post it to DB to get all models. No pagination or filtering capabilities applied yet
     try:
@@ -117,25 +124,27 @@ def get_datasets():
             {'data': result}
         ), 200
     except Exception as err:
-            return error(status=502, detail=f'{err}')
+        return error(status=502, detail=f'{err}')
 
-@geoPredictor.route('/model/<model_name>',  strict_slashes=False, methods=['GET', 'POST'])
+
+@geoPredictor.route('/model/<model_name>', strict_slashes=False, methods=['GET', 'POST'])
 @sanitize_parameters
 @validate_prediction_params
 @get_geo_by_hash
 def get_prediction(**kwargs):
-    #app.logger.info(f"id: {model_id}")
-    #function to get prediction from the selected model and region
+    # app.logger.info(f"id: {model_id}")
+    # function to get prediction from the selected model and region
     app.logger.info(f'[GET, POSTS]: Recieved {kwargs}')
-    #Set up the loop; we need to set it up here and not in the service because is not thread safe.
+    # Set up the loop; we need to set it up here and not in the service because is not thread safe.
     loop = asyncio.new_event_loop()
     # activate this if you need to debug async loop
-    #loop.set_debug(True)
+    # loop.set_debug(True)
     tests = predict(loop, **kwargs)
     loop.close()
     return jsonify({
         'data': tests
     }), 200
+
 
 # Routing
 app.register_blueprint(geoPredictor, url_prefix='/api/v1/geopredictor')
@@ -144,14 +153,17 @@ app.register_blueprint(geoPredictor, url_prefix='/api/v1/geopredictor')
 # CT Registering
 ################################################################################
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
+
+
 #
 #
 def load_config_json(name):
-    json_path = os.path.abspath(os.path.join(BASE_DIR, 'api/microservice')) + '/' + name + '.json'
+    json_path = os.path.abspath(os.path.join(PROJECT_DIR, 'microservice')) + '/' + name + '.json'
     with open(json_path) as data_file:
         info = json.load(data_file)
     return info
+
+
 #
 info = load_config_json('register')
 swagger = load_config_json('swagger')
@@ -165,6 +177,7 @@ CTRegisterMicroserviceFlask.register(
     ct_url=os.getenv('CT_URL'),
     url=os.getenv('LOCAL_URL')
 )
+
 
 ################################################################################
 # Error handler
@@ -193,4 +206,3 @@ def gone(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return error(status=500, detail='Internal Server Error')
-
